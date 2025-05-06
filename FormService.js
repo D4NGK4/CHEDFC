@@ -16,16 +16,15 @@ function registerTemplate(templateName, personnelInitials) {
     // Get all existing form responses
     const formDataValues = formSheet.getDataRange().getValues();
 
-    // Get headers to find if personalities column exists
+    // Get headers to find if Queue column exists
     const headers = formDataValues[0];
-    let personalitiesColumnIndex = headers.indexOf("Personalities");
+    let queueColumnIndex = headers.indexOf("Queue");
 
     // If the column doesn't exist, add it
-    if (personalitiesColumnIndex === -1) {
-      personalitiesColumnIndex = headers.length;
-      formSheet
-        .getRange(1, personalitiesColumnIndex + 1)
-        .setValue("Personalities");
+    if (queueColumnIndex === -1) {
+      // The Queue column should be at column F (index 5)
+      queueColumnIndex = 5;
+      formSheet.getRange(1, queueColumnIndex + 1).setValue("Queue");
     }
 
     // Find existing row with same template ID and year
@@ -41,10 +40,10 @@ function registerTemplate(templateName, personnelInitials) {
       const existingRow = formDataValues[existingRowIndex];
       count = existingRow[2] + 1;
 
-      // Update count and personalities
+      // Update count and queue
       formSheet.getRange(existingRowIndex + 1, 3).setValue(count);
       formSheet
-        .getRange(existingRowIndex + 1, personalitiesColumnIndex + 1)
+        .getRange(existingRowIndex + 1, queueColumnIndex + 1)
         .setValue(personnelInitials);
     } else {
       // No existing entry - create new with count 1
@@ -52,8 +51,8 @@ function registerTemplate(templateName, personnelInitials) {
       const controlNumber = yearShort + "-" + ("0000" + count).slice(-4);
       const templateData = mapTemplateData(templateName);
 
-      // Create an array with empty values for all columns up to the personalities column
-      const rowData = new Array(Math.max(personalitiesColumnIndex + 1, 5));
+      // Create an array with empty values for all columns up to the queue column (F)
+      const rowData = new Array(Math.max(queueColumnIndex + 1, 5));
 
       // Fill in the values we know
       rowData[0] = templateName;
@@ -65,7 +64,8 @@ function registerTemplate(templateName, personnelInitials) {
         rowData[4] = templateData["Fields"];
       }
 
-      rowData[personalitiesColumnIndex] = personnelInitials;
+      // Put personnel initials in the Queue column (F)
+      rowData[queueColumnIndex] = personnelInitials;
 
       formSheet.appendRow(rowData);
     }
