@@ -98,44 +98,71 @@
       });
     }
 
-    function setupPersonnelInitialsSection() {
+    function setupPersonnelLevelsSection() {
       // Clear existing personnel items
-      $('#personnelinitialsList').empty();
+      $('#personnelLevelsList').empty();
 
-      // Add button click event
-      $('#addPersonnelBtn').off('click').on('click', function () {
+      // Check if we have any personnel with levels
+      const personnelWithLevels = window.personnelData.names
+        .map(name => {
+          let level = '';
+          if (window.personnelData.values) {
+            const personnelEntry = window.personnelData.values.find(p => p[1] === name);
+            if (personnelEntry && personnelEntry.length > 4) {
+              level = personnelEntry[4] || '';
+            }
+          }
+          return { name, level };
+        })
+        .filter(person => person.level);
+
+      if (!personnelWithLevels || personnelWithLevels.length === 0) {
+        $('#personnelLevelsList').html(`
+          <div class="col-12">
+            <div class="alert alert-warning">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              No personnel with level assignments available. Please assign levels to personnel before proceeding.
+            </div>
+          </div>
+        `);
+        $('#addPersonnelBtn').prop('disabled', true);
+      } else {
+        // Add button click event
+        $('#addPersonnelBtn').prop('disabled', false);
+        $('#addPersonnelBtn').off('click').on('click', function () {
+          addPersonnelItem();
+        });
+
+        // Add first item automatically
         addPersonnelItem();
-      });
-
-      // Add first item automatically
-      addPersonnelItem();
+      }
     }
 
     function addPersonnelItem() {
       const personnelCount = $('.personnel-item').length + 1;
 
       const personnelItem = $(`
-      <div class="col-12 mb-2">
-        <div class="personnel-item" data-order="${personnelCount}">
-          <div class="personnel-drag">
-            <i class="bi bi-grip-vertical"></i>
+        <div class="col-12 mb-2">
+          <div class="personnel-item" data-order="${personnelCount}">
+            <div class="personnel-drag">
+              <i class="bi bi-grip-vertical"></i>
+            </div>
+            <div class="personnel-order">${personnelCount}</div>
+            <div class="personnel-select">
+              <select class="form-select personnel-select-input" name="personnel_${personnelCount}">
+                <option value="" disabled selected>Select Personnel</option>
+                ${getPersonnelOptions()}
+              </select>
+            </div>
+            <button type="button" class="personnel-remove">
+              <i class="bi bi-x-lg"></i>
+            </button>
           </div>
-          <div class="personnel-order">${personnelCount}</div>
-          <div class="personnel-select">
-            <select class="form-select personnel-select-input" name="personnel_${personnelCount}">
-              <option value="" disabled selected>Select Personnel</option>
-              ${getPersonnelOptions()}
-            </select>
-          </div>
-          <button type="button" class="personnel-remove">
-            <i class="bi bi-x-lg"></i>
-          </button>
         </div>
-      </div>
-    `);
+      `);
 
       // Add to the list
-      $('#personnelinitialsList').append(personnelItem);
+      $('#personnelLevelsList').append(personnelItem);
 
       // Add event listeners
       personnelItem.find('.personnel-remove').on('click', function () {
@@ -153,22 +180,32 @@
         return '<option value="" disabled>No personnel available</option>';
       }
 
-      return window.personnelData.names.map(name => {
-        // Assuming getPersonalities returns [email, name, initials]
-        let initials = '';
-        let fullName = name;
-
-        // Extract initials if available (should be in the full data from response)
-        if (window.personnelData.values) {
-          const personnelEntry = window.personnelData.values.find(p => p[1] === name);
-          if (personnelEntry && personnelEntry.length > 2) {
-            initials = personnelEntry[2] || '';
+      // Filter and map personnel data to only include those with levels
+      const personnelWithLevels = window.personnelData.names
+        .map(name => {
+          // Get level for this personnel
+          let level = '';
+          if (window.personnelData.values) {
+            const personnelEntry = window.personnelData.values.find(p => p[1] === name);
+            if (personnelEntry && personnelEntry.length > 4) {
+              level = personnelEntry[4] || '';
+            }
           }
-        }
 
-        const displayText = initials ? `${name} (${initials})` : name;
-        return `<option value="${initials || name}" data-name="${name}" data-initials="${initials}">${displayText}</option>`;
-      }).join('');
+          return { name, level };
+        })
+        .filter(person => person.level) // Only include personnel with non-empty levels
+        .map(person => {
+          const displayText = `${person.name} (${person.level})`;
+          return `<option value="${person.level}" data-name="${person.name}" data-level="${person.level}">${displayText}</option>`;
+        })
+        .join('');
+
+      if (!personnelWithLevels) {
+        return '<option value="" disabled>No personnel with levels available</option>';
+      }
+
+      return personnelWithLevels;
     }
 
     function reorderPersonnelItems() {
@@ -180,19 +217,19 @@
       });
     }
 
-    function getOrderedPersonnelInitials() {
-      const initials = [];
+    function getOrderedPersonnelLevels() {
+      const levels = [];
 
       $('.personnel-item').each(function () {
         const selectElement = $(this).find('select');
         const value = selectElement.val();
 
         if (value) {
-          initials.push(value);
+          levels.push(value);
         }
       });
 
-      return initials.join(', ');
+      return levels.join(', ');
     }
 
     // ===========================================================================
@@ -216,7 +253,7 @@
 
       // Set up personnel initials section
       loadPersonnelData().then(() => {
-        setupPersonnelInitialsSection();
+        setupPersonnelLevelsSection();
       }).catch(err => {
         showAlert('Failed to load personnel data: ' + err.message, 'danger');
       });
@@ -300,11 +337,30 @@
         return;
       }
 
+      // Check if there are any personnel with levels
+      const personnelWithLevels = window.personnelData?.names
+        .map(name => {
+          let level = '';
+          if (window.personnelData.values) {
+            const personnelEntry = window.personnelData.values.find(p => p[1] === name);
+            if (personnelEntry && personnelEntry.length > 4) {
+              level = personnelEntry[4] || '';
+            }
+          }
+          return { name, level };
+        })
+        .filter(person => person.level);
+
+      if (!personnelWithLevels || personnelWithLevels.length === 0) {
+        showAlert('Cannot register: No personnel with level assignments available', 'danger');
+        return;
+      }
+
       isSubmitting = true;
       const templateName = $('#modalFormName').text();
-      const personnelInitials = getOrderedPersonnelInitials();
+      const personnelLevels = getOrderedPersonnelLevels();
 
-      if (!personnelInitials) {
+      if (!personnelLevels) {
         showAlert('Please select at least one personnel', 'danger');
         isSubmitting = false;
         return;
@@ -332,7 +388,7 @@
           submitBtn.prop('disabled', false);
           isSubmitting = false;
         })
-        .registerTemplate(templateName, personnelInitials);
+        .registerTemplate(templateName, personnelLevels);
     }
 
     function submitFormData() {

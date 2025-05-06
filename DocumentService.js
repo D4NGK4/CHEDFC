@@ -539,6 +539,7 @@ function getPersonalityDetails(personalityName) {
       email: person[0] || "", // Email is at index 0
       name: person[1] || "", // Name is at index 1
       initials: person[2] || "", // Initials is at index 2
+      level: person[4] || "", // Level is at index 4
     };
   } catch (e) {
     Logger.log("[Get Personality Details] ERROR: " + e.toString());
