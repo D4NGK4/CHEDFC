@@ -1,0 +1,60 @@
+  <!-- Templates Page -->
+    <div id="templates-page" class="page">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h2 class="h4 fw-bold text-dark mb-3 mb-md-0">All Templates</h2>
+
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <span id="formCount" class="text-muted small">0 forms</span>
+          <div class="d-flex flex-wrap w-100 w-md-auto">
+            <span class="text-muted small me-2">Sort by:</span>
+            <button class="btn btn-sm btn-light sortable" data-sort="formName" data-direction="asc">
+          Name <i class="bi bi-arrow-down-up ms-1 small"></i>
+        </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0" id="templatesTable">
+              <thead>
+                <tr>
+                  <th scope="col" class="cell-index">#</th>
+                  <th scope="col" class="cell-name">Template Name</th>
+                  <th scope="col" class="cell-fields">Fields</th>
+                  <th scope="col" class="cell-filename-fields d-none d-md-table-cell">Filename Fields</th>
+                  <th scope="col" class="cell-fileid d-none d-lg-table-cell">File ID</th>
+                  <th scope="col" class="cell-email d-none d-md-table-cell">Email</th>
+                  <th scope="col" class="cell-private">Private</th>
+                </tr>
+              </thead>
+              <tbody id="templatesTableBody">
+                <tr>
+                  <td colspan="7" class="text-center py-4">
+                    <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+                    <p class="text-muted mt-2 small">Loading templates...</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="card shadow-sm mt-4 d-none">
+        <div class="card-body">
+          <div class="empty-state">
+            <div class="empty-icon">
+              <i class="bi bi-folder"></i>
+            </div>
+            <h5 class="fw-bold text-dark">No Templates Available</h5>
+            <p class="text-muted mx-auto" style="max-width: 400px;">
+              There are no templates to display at this time. Templates will appear here once they are added to the
+              system.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>

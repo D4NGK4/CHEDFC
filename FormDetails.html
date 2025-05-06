@@ -1,0 +1,389 @@
+<!-- Form Details Modal -->
+<div class="modal fade" id="formDetailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content">
+      <!-- Modal Header with custom color -->
+      <div class="modal-header text-dark">
+        <div>
+          <h5 class="modal-title h4 fw-bold" id="modalFormName">Form Details</h5>
+          <div class="d-flex align-items-center">
+            <i class="bi bi-file-earmark-text me-2 small"></i>
+            <a href="#" id="modalFormUrl" target="_blank" class="text-decoration-none text-dark small">
+              View template document
+            </a>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body p-3 p-md-4 bg-light">
+        <div class="card shadow-sm border-0 rounded">
+          <div class="card-header bg-white">
+            <h6 class="fw-bold text-dark m-0">
+              <i class="bi bi-list-check me-2" style="color: #212121;"></i>Form Fields
+            </h6>
+          </div>
+          <div class="card-body p-4">
+            <!-- Form Area -->
+            <form id="dynamicForm">
+              <div id="formFieldsContainer" class="mb-4"></div>
+
+              <!-- Personalities Section -->
+              <div class="row mb-4 border-top pt-4">
+                <div class="col-12">
+                  <h6 class="fw-bold text-dark mb-3">
+                    <i class="bi bi-person-badge me-2"></i>Personnel Initials Order
+                  </h6>
+                </div>
+
+                <div class="col-12">
+                  <div class="card material-card">
+                    <div class="card-body">
+                      <div class="row" id="personnelinitialsList">
+                        <!-- Ordered initials will be added here -->
+                      </div>
+                      <div class="d-flex justify-content-end mt-3">
+                        <button type="button" id="addPersonnelBtn" class="btn btn-sm btn-outline-primary">
+                          <i class="bi bi-plus-circle me-1"></i>Add Personnel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action Buttons with Material Design -->
+              <div class="pt-3 border-top">
+                <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 mt-3">
+                  <button type="button" class="btn btn-outline-secondary material-button" data-bs-dismiss="modal">
+                    Cancel
+                  </button>
+                  <button type="submit" class="btn material-button material-button-primary">
+                    <i class="bi bi-check-lg me-2"></i>Register Template
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Material Design Card */
+  .material-card {
+    border-radius: 8px;
+    box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.30), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+    border: none;
+    transition: box-shadow 0.3s ease;
+  }
+
+  .material-card:hover {
+    box-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.30), 0 4px 8px 3px rgba(60, 64, 67, 0.15);
+  }
+
+  /* Google-style switch */
+  .material-switch-container {
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .material-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    min-height: 24px;
+    user-select: none;
+  }
+
+  .material-switch-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .material-switch-track {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 14px;
+    background-color: #bdc1c6;
+    border-radius: 14px;
+    transition: background-color 0.3s ease;
+    margin-top: 0;
+    flex-shrink: 0;
+  }
+
+  .material-switch-thumb {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 20px;
+    height: 20px;
+    background-color: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    transform: translateY(-50%);
+  }
+
+  .material-switch-input:checked+.material-switch-track {
+    background-color: rgba(26, 115, 232, 0.5);
+  }
+
+  .material-switch-input:checked+.material-switch-track+.material-switch-thumb {
+    background-color: #1a73e8;
+    transform: translate(16px, -50%);
+  }
+
+  .material-switch-label {
+    margin-left: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #202124;
+    line-height: 1.4;
+    padding-top: 1px;
+  }
+
+  .material-switch-input:focus+.material-switch-track {
+    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+  }
+
+  /* Material Design Buttons */
+  .material-button {
+    padding: 8px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 4px;
+    letter-spacing: 0.25px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .material-button-primary {
+    background-color: #1a73e8;
+    color: #ffffff;
+    border: none;
+  }
+
+  .material-button-primary:hover {
+    background-color: #1765cc;
+    color: #ffffff;
+    box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.30), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+  }
+
+  .material-button-primary:active {
+    background-color: #1657a7;
+    color: #ffffff;
+  }
+
+  .btn-outline-secondary.material-button {
+    color: #5f6368;
+    border-color: #dadce0;
+    background-color: transparent;
+  }
+
+  .btn-outline-secondary.material-button:hover {
+    background-color: #f1f3f4;
+    color: #202124;
+  }
+
+
+  .form-fields-wrapper {
+    padding: 8px 4px;
+  }
+
+  .material-form-group {
+    margin-bottom: 24px;
+    position: relative;
+  }
+
+  .material-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #5f6368;
+    transition: color 0.2s ease;
+  }
+
+  .material-input-container {
+    position: relative;
+    border-radius: 4px;
+    transition: box-shadow 0.2s ease;
+  }
+
+  .material-input-container:focus-within {
+    box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.30), 0 2px 6px 2px rgba(60, 64, 67, 0.15);
+  }
+
+  .material-input-container:focus-within .material-label {
+    color: #1a73e8;
+  }
+
+  .material-input,
+  .material-select,
+  .material-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    font-size: 16px;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+    background-color: #fff;
+    color: #202124;
+    outline: none;
+  }
+
+  .material-select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding-right: 32px;
+    /* Add more padding on the right to avoid text being under the arrow */
+  }
+
+  .material-input:focus,
+  .material-select:focus,
+  .material-textarea:focus {
+    border-color: #1a73e8;
+  }
+
+  .material-input.readonly {
+    background-color: #f8f9fa;
+    color: #5f6368;
+    border-color: #e8eaed;
+  }
+
+  .material-textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  .material-helper-text {
+    font-size: 12px;
+    color: #5f6368;
+    margin-top: 4px;
+    display: block;
+  }
+
+  .material-date-time-container {
+    display: flex;
+    gap: 16px;
+  }
+
+  .material-date-time-container>div {
+    flex: 1;
+  }
+
+  .material-checkbox-container {
+    display: flex;
+    align-items: center;
+    padding-top: 8px;
+  }
+
+  .material-checkbox {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+  }
+
+  .material-checkbox-label {
+    font-size: 16px;
+    color: #202124;
+  }
+
+  .material-select-container {
+    position: relative;
+  }
+
+  .material-select-container::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #5f6368;
+    pointer-events: none;
+  }
+
+  /* Hover effects */
+  .material-input:hover,
+  .material-select:hover,
+  .material-textarea:hover {
+    border-color: #bdc1c6;
+  }
+
+  /* Readonly styling */
+  .control-number-field {
+    background-color: #f8f9fa;
+    color: #5f6368;
+    font-weight: 500;
+  }
+
+  /* Personnel item styles */
+  .personnel-item {
+    display: flex;
+    align-items: center;
+    background-color: #f8f9fa;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+  }
+
+  .personnel-order {
+    background-color: #1a73e8;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 500;
+    margin-right: 12px;
+  }
+
+  .personnel-select {
+    flex-grow: 1;
+  }
+
+  .personnel-remove {
+    color: #5f6368;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    margin-left: 8px;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+  }
+
+  .personnel-remove:hover {
+    background-color: #f1f3f4;
+    color: #ea4335;
+  }
+
+  .personnel-drag {
+    color: #5f6368;
+    cursor: move;
+    padding: 4px;
+    margin-right: 8px;
+  }
+</style>

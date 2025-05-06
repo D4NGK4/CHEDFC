@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top">
+
+  <!-- CSS -->
+  <?!= include('styles.css.html'); ?>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+</head>
+
+<body onload="loadImage()">
+  <div class="bg-light">
+    <?!= include('NavBar.html'); ?>
+    <?!= include('formList.html'); ?>
+    <?!= include('templatesPage.html'); ?>
+    <?!= include('submissionsPage.html'); ?>
+  </div>
+
+  <?!= include('FormDetails.html'); ?>
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+
+  <!-- Popper.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+
+  <!-- Bootstrap (latest) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+
+  <!-- Bootstrap Table & Export Plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/tableexport.jquery.plugin@1.29.0/tableExport.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.24.1/dist/bootstrap-table.min.js"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.24.1/dist/extensions/export/bootstrap-table-export.min.js">
+  </script>
+
+
+  <script>
+    function loadImage() {
+        google.script.run.withSuccessHandler(function(imageUrl) {
+          const imgElement = document.getElementById("image");
+          imgElement.src = imageUrl;
+          
+          imgElement.onload = function() {
+            $(document).trigger('imageLoaded');
+          };
+        }).getImageUrl();
+      }
+
+      
+  </script>
+  <?!= include('formList.js.html'); ?>
+
+</body>
+
+</html>
