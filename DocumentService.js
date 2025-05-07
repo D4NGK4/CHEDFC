@@ -85,11 +85,15 @@ function createDoc(formData, controlNumber, templateName) {
     // Get personality details from the enhanced modal
     let fileName = doc.name || templateName + " - " + controlNumber;
 
+    // Get target person (author) from form data
+    const targetPerson = formDataObj["TARGET PERSON"] || "";
+    Logger.log("[Document Creation] Target Person: " + targetPerson);
+
     // Check for initial stamp requirements
     const needsInitialStamp =
       formDataObj.needsInitialStamp === true ||
       formDataObj.needsInitialStamp === "true";
-    const initialPersonality = formDataObj.initialPersonality;
+    const initialPersonality = formDataObj.initialPersonality || targetPerson;
 
     // Check for signature stamp requirements
     const needsSignatureStamp =
@@ -114,15 +118,32 @@ function createDoc(formData, controlNumber, templateName) {
     const trackingResult = this.trackSubmissionWithPersonalities(
       fileId,
       fileName,
-      needsInitialStamp ? initialPersonality : "",
+      needsInitialStamp ? initialPersonality : targetPerson,
       needsSignatureStamp ? signaturePersonality : "",
-      needsInitialStamp,
+      needsInitialStamp || !!targetPerson,
       needsSignatureStamp
     );
 
     Logger.log(
       "[Document Creation] Tracked submission result: " + trackingResult
     );
+
+    // If template has a level order, make sure the target person is first in queue
+    if (templateData["Level Order"] && targetPerson) {
+      try {
+        // Set the target person as the first approver in the queue
+        Logger.log(
+          "[Document Creation] Setting target person as first approver in queue: " +
+            targetPerson
+        );
+        DocumentGenerator.setFirstApprover(fileId, targetPerson);
+      } catch (queueError) {
+        Logger.log(
+          "[Document Creation] ERROR setting approver queue: " +
+            queueError.toString()
+        );
+      }
+    }
 
     return {
       status: "success",
@@ -874,6 +895,74 @@ function getAllSubmissions() {
     };
   } catch (e) {
     Logger.log("[Get Submissions] ERROR: " + e.toString());
+    return {
+      status: "error",
+      message: e.message || "Unknown error occurred",
+    };
+  }
+}
+
+function registerTemplate(templateName, levelOrder, targetPerson) {
+  try {
+    Logger.log(
+      "[Register Template] Starting registration for: " + templateName
+    );
+    Logger.log("[Register Template] Level Order: " + levelOrder);
+    Logger.log("[Register Template] Target Person: " + targetPerson);
+
+    if (!templateName) {
+      throw new Error("Template name is required");
+    }
+
+    if (!levelOrder) {
+      throw new Error("Level order is required");
+    }
+
+    // Get existing templates
+    const templates = DocumentGenerator.getTemplates();
+
+    // Check if template exists
+    if (!templates[templateName]) {
+      throw new Error("Template not found: " + templateName);
+    }
+
+    // Store the target person and level order
+    templates[templateName]["Level Order"] = levelOrder;
+    templates[templateName]["Target Person"] = targetPerson || "";
+
+    // Make sure the fields include TARGET PERSON:PERSONALITY if not already there
+    let fields = templates[templateName]["Fields"] || "";
+    if (!fields.includes("TARGET PERSON:PERSONALITY")) {
+      // Check if fields ends with semicolon, if not add one
+      if (fields && !fields.endsWith(";")) {
+        fields += ";";
+      }
+      fields += " TARGET PERSON:PERSONALITY";
+      templates[templateName]["Fields"] = fields;
+      Logger.log(
+        "[Register Template] Added TARGET PERSON field to template fields"
+      );
+    }
+
+    // Save updated templates
+    const result = DocumentGenerator.saveTemplates(templates);
+
+    if (!result) {
+      throw new Error("Failed to save template");
+    }
+
+    Logger.log(
+      "[Register Template] Successfully registered template with level order"
+    );
+    return {
+      status: "success",
+      templateName: templateName,
+      levelOrder: levelOrder,
+      targetPerson: targetPerson || "Not explicitly provided",
+      fields: templates[templateName]["Fields"],
+    };
+  } catch (e) {
+    Logger.log("[Register Template] ERROR: " + e.toString());
     return {
       status: "error",
       message: e.message || "Unknown error occurred",

@@ -77,7 +77,7 @@
     }
 
     // ===========================================================================
-    // Personnel Initials Management
+    // Personnel Levels Management
     // ===========================================================================
     function loadPersonnelData() {
       return new Promise((resolve, reject) => {
@@ -98,11 +98,23 @@
       });
     }
 
-    function setupPersonnelLevelsSection() {
-      // Clear existing personnel items
-      $('#personnelLevelsList').empty();
+    // Store all unique levels
+    const allLevels = [
+      "Director", "Chief", "Asst. Chief", "Chief, Account",
+      "Budget Officer", "Division Chief", "Commisioner",
+      "Retired", "Chief Technical", "Chief Administrative"
+    ];
+    window.selectedLevels = [];
 
-      // Check if we have any personnel with levels
+    function setupPersonnelLevelsSection() {
+      // Clear existing content
+      $('#levelSelector').empty();
+      $('#levelOrderContainer').empty();
+
+      // Default options
+      $('#levelSelector').append('<option value="" disabled selected>Add Level</option>');
+
+      // Get personnel with levels from data
       const personnelWithLevels = window.personnelData.names
         .map(name => {
           let level = '';
@@ -117,119 +129,78 @@
         .filter(person => person.level);
 
       if (!personnelWithLevels || personnelWithLevels.length === 0) {
-        $('#personnelLevelsList').html(`
-          <div class="col-12">
-            <div class="alert alert-warning">
-              <i class="bi bi-exclamation-triangle-fill me-2"></i>
-              No personnel with level assignments available. Please assign levels to personnel before proceeding.
-            </div>
+        $('#levelSelector').append('<option value="" disabled>No levels available</option>');
+        showAlert('No personnel with level assignments available', 'warning');
+        return;
+      }
+
+      // Populate level selector with predefined levels
+      allLevels.forEach(level => {
+        $('#levelSelector').append(`<option value="${level}">${level}</option>`);
+      });
+
+      // Initialize empty selected levels array and hidden input
+      window.selectedLevels = [];
+      updateLevelOrderInput();
+
+      // Add button click event
+      $('#addLevelBtn').off('click').on('click', function () {
+        addLevelToOrder();
+      });
+    }
+
+    function addLevelToOrder() {
+      const level = $('#levelSelector').val();
+
+      if (!level) {
+        showAlert('Please select a level to add', 'warning');
+        return;
+      }
+
+      // Add to array if not already present
+      if (!window.selectedLevels.includes(level)) {
+        window.selectedLevels.push(level);
+
+        // Add visual chip
+        const levelChip = $(`
+          <div class="level-chip" data-level="${level}">
+            ${level}
+            <span class="remove-level">
+              <i class="bi bi-x"></i>
+            </span>
           </div>
         `);
-        $('#addPersonnelBtn').prop('disabled', true);
-      } else {
-        // Add button click event
-        $('#addPersonnelBtn').prop('disabled', false);
-        $('#addPersonnelBtn').off('click').on('click', function () {
-          addPersonnelItem();
+
+        $('#levelOrderContainer').append(levelChip);
+
+        // Add remove event
+        levelChip.find('.remove-level').on('click', function () {
+          removeLevelFromOrder(level);
+          levelChip.remove();
         });
 
-        // Add first item automatically
-        addPersonnelItem();
-      }
-    }
-
-    function addPersonnelItem() {
-      const personnelCount = $('.personnel-item').length + 1;
-
-      const personnelItem = $(`
-        <div class="col-12 mb-2">
-          <div class="personnel-item" data-order="${personnelCount}">
-            <div class="personnel-drag">
-              <i class="bi bi-grip-vertical"></i>
-            </div>
-            <div class="personnel-order">${personnelCount}</div>
-            <div class="personnel-select">
-              <select class="form-select personnel-select-input" name="personnel_${personnelCount}">
-                <option value="" disabled selected>Select Personnel</option>
-                ${getPersonnelOptions()}
-              </select>
-            </div>
-            <button type="button" class="personnel-remove">
-              <i class="bi bi-x-lg"></i>
-            </button>
-          </div>
-        </div>
-      `);
-
-      // Add to the list
-      $('#personnelLevelsList').append(personnelItem);
-
-      // Add event listeners
-      personnelItem.find('.personnel-remove').on('click', function () {
-        if ($('.personnel-item').length > 1) {
-          personnelItem.remove();
-          reorderPersonnelItems();
-        } else {
-          showAlert('At least one personnel must be selected', 'warning');
-        }
-      });
-    }
-
-    function getPersonnelOptions() {
-      if (!window.personnelData || !window.personnelData.names) {
-        return '<option value="" disabled>No personnel available</option>';
+        // Update hidden input
+        updateLevelOrderInput();
+      } else {
+        showAlert(`${level} is already in the level order`, 'info');
       }
 
-      // Filter and map personnel data to only include those with levels
-      const personnelWithLevels = window.personnelData.names
-        .map(name => {
-          // Get level for this personnel
-          let level = '';
-          if (window.personnelData.values) {
-            const personnelEntry = window.personnelData.values.find(p => p[1] === name);
-            if (personnelEntry && personnelEntry.length > 4) {
-              level = personnelEntry[4] || '';
-            }
-          }
-
-          return { name, level };
-        })
-        .filter(person => person.level) // Only include personnel with non-empty levels
-        .map(person => {
-          const displayText = `${person.name} (${person.level})`;
-          return `<option value="${person.level}" data-name="${person.name}" data-level="${person.level}">${displayText}</option>`;
-        })
-        .join('');
-
-      if (!personnelWithLevels) {
-        return '<option value="" disabled>No personnel with levels available</option>';
-      }
-
-      return personnelWithLevels;
+      // Reset selector
+      $('#levelSelector').val('');
     }
 
-    function reorderPersonnelItems() {
-      $('.personnel-item').each(function (index) {
-        const newOrder = index + 1;
-        $(this).attr('data-order', newOrder);
-        $(this).find('.personnel-order').text(newOrder);
-        $(this).find('select').attr('name', `personnel_${newOrder}`);
-      });
+    function removeLevelFromOrder(level) {
+      // Remove from array
+      window.selectedLevels = window.selectedLevels.filter(l => l !== level);
+      updateLevelOrderInput();
     }
 
-    function getOrderedPersonnelLevels() {
-      const levels = [];
+    function updateLevelOrderInput() {
+      $('#levelOrderArray').val(window.selectedLevels.join(','));
+    }
 
-      $('.personnel-item').each(function () {
-        const selectElement = $(this).find('select');
-        const value = selectElement.val();
-
-        if (value) {
-          levels.push(value);
-        }
-      });
-
-      return levels.join(', ');
+    function getLevelOrder() {
+      return window.selectedLevels.join(',');
     }
 
     // ===========================================================================
@@ -358,10 +329,13 @@
 
       isSubmitting = true;
       const templateName = $('#modalFormName').text();
-      const personnelLevels = getOrderedPersonnelLevels();
+      const levelOrder = getLevelOrder();
 
-      if (!personnelLevels) {
-        showAlert('Please select at least one personnel', 'danger');
+      // Get target person from the field
+      const targetPerson = $('#target-person').val();
+
+      if (!levelOrder) {
+        showAlert('Please add at least one level to the level order', 'danger');
         isSubmitting = false;
         return;
       }
@@ -388,7 +362,7 @@
           submitBtn.prop('disabled', false);
           isSubmitting = false;
         })
-        .registerTemplate(templateName, personnelLevels);
+        .registerTemplate(templateName, levelOrder, targetPerson);
     }
 
     function submitFormData() {
@@ -1013,6 +987,8 @@
 
         if (type && type.startsWith('SELECT=')) {
           createSelectField(fieldGroup, name, fieldId, type, label);
+        } else if (type && type.toUpperCase() === 'PERSONALITY') {
+          createPersonalityField(fieldGroup, name, fieldId, label);
         } else {
           const normalizedType = type ? type.toUpperCase().trim() : 'TEXT';
 
@@ -1046,6 +1022,51 @@
       });
 
       fieldGroup.append(label, input);
+    }
+
+    function createPersonalityField(fieldGroup, name, fieldId, label) {
+      const input = $('<select>').addClass('form-select').attr({
+        id: fieldId,
+        name: name
+      });
+
+      $('<option>').attr({
+        value: '',
+        selected: true,
+        disabled: true
+      }).text('-- Select a personality --').appendTo(input);
+
+      // Populate with available personalities
+      if (window.personnelData && window.personnelData.names) {
+        window.personnelData.names.forEach(personalityName => {
+          $('<option>').attr('value', personalityName).text(personalityName).appendTo(input);
+        });
+      } else {
+        // If personnel data isn't loaded yet, load it
+        loadPersonnelData().then(data => {
+          input.empty();
+          $('<option>').attr({
+            value: '',
+            selected: true,
+            disabled: true
+          }).text('-- Select a personality --').appendTo(input);
+
+          data.names.forEach(personalityName => {
+            $('<option>').attr('value', personalityName).text(personalityName).appendTo(input);
+          });
+        }).catch(err => {
+          console.error('Failed to load personalities for field:', err);
+        });
+      }
+
+      // Add a note that this person will be first in the approval queue
+      if (name === 'TARGET PERSON') {
+        const helperText = $('<small>').addClass('form-text text-muted mt-1')
+          .text('This person will be the first in the approval queue.');
+        fieldGroup.append(label, input, helperText);
+      } else {
+        fieldGroup.append(label, input);
+      }
     }
 
     function createDateField(fieldGroup, name, fieldId, normalizedType, label) {

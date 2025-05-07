@@ -33,20 +33,29 @@
               <div class="row mb-4 border-top pt-4">
                 <div class="col-12">
                   <h6 class="fw-bold text-dark mb-3">
-                    <i class="bi bi-person-badge me-2"></i>Personnel Level Order
+                    <i class="bi bi-person-badge me-2"></i>Personnel Configuration
                   </h6>
                 </div>
 
-                <div class="col-12">
+                <div class="col-12 mb-3">
                   <div class="card material-card">
                     <div class="card-body">
-                      <div class="row" id="personnelLevelsList">
-                        <!-- Ordered levels will be added here -->
-                      </div>
-                      <div class="d-flex justify-content-end mt-3">
-                        <button type="button" id="addPersonnelBtn" class="btn btn-sm btn-outline-primary">
-                          <i class="bi bi-plus-circle me-1"></i>Add Personnel
-                        </button>
+                      <!-- Level Order Array -->
+                      <div class="mb-3">
+                        <label class="form-label">Level Order</label>
+                        <div id="levelOrderContainer" class="d-flex flex-wrap gap-2">
+                          <!-- Level chips will be added here by JS -->
+                        </div>
+                        <div class="mt-2">
+                          <input type="hidden" id="levelOrderArray" name="levelOrderArray">
+                          <select id="levelSelector" class="form-select d-inline-block" style="width: auto;">
+                            <option value="" disabled selected>Add Level</option>
+                            <!-- Options will be populated by JS -->
+                          </select>
+                          <button type="button" id="addLevelBtn" class="btn btn-sm btn-outline-primary ms-2">
+                            <i class="bi bi-plus-circle me-1"></i>Add
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -335,55 +344,28 @@
     font-weight: 500;
   }
 
-  /* Personnel item styles */
-  .personnel-item {
-    display: flex;
+  /* Level chip styles */
+  .level-chip {
+    display: inline-flex;
     align-items: center;
-    background-color: #f8f9fa;
-    border: 1px solid #dadce0;
-    border-radius: 4px;
-    padding: 8px 12px;
+    background-color: #e8f0fe;
+    color: #1a73e8;
+    border-radius: 16px;
+    padding: 4px 12px;
+    font-size: 14px;
+    margin-right: 8px;
     margin-bottom: 8px;
   }
 
-  .personnel-order {
-    background-color: #1a73e8;
-    color: white;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: 500;
-    margin-right: 12px;
-  }
-
-  .personnel-select {
-    flex-grow: 1;
-  }
-
-  .personnel-remove {
-    color: #5f6368;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 4px;
+  .level-chip .remove-level {
     margin-left: 8px;
-    border-radius: 50%;
-    transition: background-color 0.2s;
-  }
-
-  .personnel-remove:hover {
-    background-color: #f1f3f4;
-    color: #ea4335;
-  }
-
-  .personnel-drag {
+    cursor: pointer;
     color: #5f6368;
-    cursor: move;
-    padding: 4px;
-    margin-right: 8px;
+    font-size: 12px;
+    transition: color 0.2s;
+  }
+
+  .level-chip .remove-level:hover {
+    color: #ea4335;
   }
 </style>
