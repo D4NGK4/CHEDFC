@@ -29,11 +29,41 @@
             <form id="dynamicForm">
               <div id="formFieldsContainer" class="mb-4"></div>
 
+              <!-- Document Options Section -->
+              <div class="row mb-4 border-top pt-4">
+                <div class="col-12">
+                  <h6 class="fw-bold text-dark mb-3">
+                    <i class="bi bi-gear me-2"></i>Document Options
+                  </h6>
+                </div>
+
+                <div class="col-12 mb-3">
+                  <div class="card material-card">
+                    <div class="card-body">
+                      <!-- Control Number Toggle -->
+                      <div class="material-switch-container mb-3">
+                        <label class="material-switch">
+                          <input type="checkbox" class="material-switch-input" id="controlNumberToggle" checked>
+                          <span class="material-switch-track"></span>
+                          <span class="material-switch-thumb"></span>
+                        </label>
+                        <span class="material-switch-label">
+                          Include control number
+                          <small class="d-block text-muted">When enabled, a control number will be generated for this
+                            document</small>
+                        </span>
+                      </div>
+                      <input type="hidden" id="includeControlNumber" name="includeControlNumber" value="true">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Personalities Section -->
               <div class="row mb-4 border-top pt-4">
                 <div class="col-12">
                   <h6 class="fw-bold text-dark mb-3">
-                    <i class="bi bi-person-badge me-2"></i>Personnel Configuration
+                    <i class="bi bi-person-badge me-2"></i>Approval Workflow
                   </h6>
                 </div>
 
@@ -42,19 +72,84 @@
                     <div class="card-body">
                       <!-- Level Order Array -->
                       <div class="mb-3">
-                        <label class="form-label">Level Order</label>
-                        <div id="levelOrderContainer" class="d-flex flex-wrap gap-2">
-                          <!-- Level chips will be added here by JS -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                          <label class="form-label mb-0 fw-bold">Approval Sequence</label>
+                          <button type="button" class="btn btn-sm btn-outline-primary" id="addLevelBtn">
+                            <i class="bi bi-plus-circle me-1"></i>Add Level
+                          </button>
                         </div>
-                        <div class="mt-2">
-                          <input type="hidden" id="levelOrderArray" name="levelOrderArray">
-                          <select id="levelSelector" class="form-select d-inline-block" style="width: auto;">
-                            <option value="" disabled selected>Add Level</option>
+
+                        <div class="alert alert-info mb-3 d-flex align-items-start">
+                          <i class="bi bi-info-circle-fill me-2 mt-1"></i>
+                          <small>Configure the approval workflow for this document. The system will use emails
+                            associated with each level in the approval sequence. You can enable/disable the Author as
+                            the first approver and add subsequent approval levels.</small>
+                        </div>
+
+                        <!-- Division Chief Info Card -->
+                        <div class="alert alert-primary mb-3 d-flex align-items-start">
+                          <i class="bi bi-lightbulb-fill me-2 mt-1"></i>
+                          <div>
+                            <small class="fw-bold">Division Chief Smart Assignment</small>
+                            <small class="d-block mt-1">
+                              When you select "Division Chief" as an approval level, the system will automatically
+                              assign the appropriate
+                              Division Chief based on your division (Technical or Administrative). If you're assigned to
+                              both divisions,
+                              all Division Chiefs will be included.
+                            </small>
+                          </div>
+                        </div>
+
+                        <!-- Author Toggle -->
+                        <div class="material-switch-container mb-3">
+                          <label class="material-switch">
+                            <input type="checkbox" class="material-switch-input" id="authorToggle" checked>
+                            <span class="material-switch-track"></span>
+                            <span class="material-switch-thumb"></span>
+                          </label>
+                          <span class="material-switch-label">
+                            Include current user as first approver
+                            <small class="d-block text-muted">When enabled, the current user (you) will be the first in
+                              the approval queue</small>
+                          </span>
+                        </div>
+
+                        <!-- Approval Workflow Visualization -->
+                        <div class="approval-flow mb-4">
+                          <!-- First fixed level - Author (will be hidden/shown based on toggle) -->
+                          <div class="approval-step fixed" id="authorStep">
+                            <div class="approval-step-number">1</div>
+                            <div class="approval-step-content">
+                              <div class="approval-step-title">Author (Current User)</div>
+                              <div class="approval-step-desc">Your email will be used as the first approver</div>
+                            </div>
+                          </div>
+
+                          <!-- Arrow connector (will be hidden/shown based on toggle) -->
+                          <div class="approval-connector" id="authorConnector">
+                            <i class="bi bi-arrow-down"></i>
+                          </div>
+
+                          <!-- Dynamic levels container -->
+                          <div id="levelOrderContainer" class="approval-dynamic-container">
+                            <!-- Level items will be added here by JS -->
+                            <div class="approval-empty-state text-center p-3">
+                              <i class="bi bi-diagram-3 text-muted mb-2" style="font-size: 2rem;"></i>
+                              <p class="text-muted mb-0">No approval levels added yet. Use the "Add Level" button to
+                                create your approval workflow.</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Level Selector -->
+                        <div class="input-group" id="levelSelectorGroup" style="max-width: 500px;">
+                          <select id="levelSelector" class="form-select">
+                            <option value="" disabled selected>Select a level to add to the approval workflow</option>
                             <!-- Options will be populated by JS -->
                           </select>
-                          <button type="button" id="addLevelBtn" class="btn btn-sm btn-outline-primary ms-2">
-                            <i class="bi bi-plus-circle me-1"></i>Add
-                          </button>
+                          <input type="hidden" id="levelOrderArray" name="levelOrderArray">
+                          <input type="hidden" id="includeAuthor" name="includeAuthor" value="true">
                         </div>
                       </div>
                     </div>
@@ -69,7 +164,7 @@
                     Cancel
                   </button>
                   <button type="submit" class="btn material-button material-button-primary">
-                    <i class="bi bi-check-lg me-2"></i>Register Template
+                    <i class="bi bi-check-lg me-2"></i>Register Template & Create Document
                   </button>
                 </div>
               </div>
@@ -344,28 +439,102 @@
     font-weight: 500;
   }
 
-  /* Level chip styles */
-  .level-chip {
-    display: inline-flex;
-    align-items: center;
+  /* New Approval Flow Styles */
+  .approval-flow {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .approval-step {
+    display: flex;
+    align-items: flex-start;
+    background-color: white;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .approval-step:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  }
+
+  .approval-step.fixed {
     background-color: #e8f0fe;
-    color: #1a73e8;
-    border-radius: 16px;
-    padding: 4px 12px;
+    border-left: 4px solid #1a73e8;
+  }
+
+  .approval-step-number {
+    background-color: #1a73e8;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
     font-size: 14px;
-    margin-right: 8px;
-    margin-bottom: 8px;
+    margin-right: 12px;
+    flex-shrink: 0;
   }
 
-  .level-chip .remove-level {
-    margin-left: 8px;
-    cursor: pointer;
-    color: #5f6368;
+  .approval-step-content {
+    flex-grow: 1;
+  }
+
+  .approval-step-title {
+    font-weight: 500;
+    margin-bottom: 2px;
+    color: #202124;
+  }
+
+  .approval-step-desc {
     font-size: 12px;
-    transition: color 0.2s;
+    color: #5f6368;
   }
 
-  .level-chip .remove-level:hover {
+  .approval-step-remove {
+    background: none;
+    border: none;
+    color: #5f6368;
+    padding: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .approval-step-remove:hover {
+    background-color: rgba(32, 33, 36, 0.059);
     color: #ea4335;
+  }
+
+  .approval-connector {
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #5f6368;
+    font-size: 14px;
+  }
+
+  .approval-dynamic-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .approval-empty-state {
+    border: 1px dashed #dadce0;
+    border-radius: 8px;
+    background-color: #f8f9fa;
   }
 </style>

@@ -21,7 +21,7 @@ function getAllTemplates() {
     });
 
     // Process each template row
-    response.data.forEach(row => {
+    response.data.forEach((row) => {
       const fileName = row[headerIndex["File Name"]];
 
       if (!fileName) {
@@ -32,17 +32,17 @@ function getAllTemplates() {
       allTemplates[fileName] = {
         "File Name": fileName,
         "File ID": row[headerIndex["File ID"]],
-        "Fields": row[headerIndex["Fields"]],
+        Fields: row[headerIndex["Fields"]],
         "Fields for Filename": row[headerIndex["Fields for Filename"]],
-        "isPrivate": row[headerIndex["isPrivate"]] === "TRUE",
-        "isTrashed": row[headerIndex["isTrashed"]] === "TRUE",
-        "Email": row[headerIndex["Email"]],
-        "Timestamp": row[headerIndex["Timestamp"]]
+        isPrivate: row[headerIndex["isPrivate"]] === "TRUE",
+        isTrashed: row[headerIndex["isTrashed"]] === "TRUE",
+        Email: row[headerIndex["Email"]],
+        Timestamp: row[headerIndex["Timestamp"]],
       };
     });
 
     Logger.log("Successfully loaded all templates data");
-    Logger.log(allTemplates)
+    Logger.log(allTemplates);
     return allTemplates;
   } catch (error) {
     Logger.log(`Error loading templates: ${error}`);
@@ -81,14 +81,12 @@ function initializeFormRequest(templateId) {
         Form_Fields: templateData["Fields"],
         File_Name: templateData["File Name"],
         File_ID: templateData["File ID"],
-        Is_Temporary: true
+        Is_Temporary: true,
       },
-      templateData: templateData
+      templateData: templateData,
     };
   } catch (error) {
-    Logger.log('Error in initializeFormRequest: ' + error.toString());
+    Logger.log("Error in initializeFormRequest: " + error.toString());
     throw error;
   }
 }
-
-

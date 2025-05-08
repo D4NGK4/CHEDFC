@@ -100,7 +100,7 @@
 
     // Store all unique levels
     const allLevels = [
-      "Director", "Chief", "Asst. Chief", "Chief, Account",
+      "Director", "Chief", "Asst. Chief", "Accountant",
       "Budget Officer", "Division Chief", "Commisioner",
       "Retired", "Chief Technical", "Chief Administrative"
     ];
@@ -134,7 +134,7 @@
         return;
       }
 
-      // Populate level selector with predefined levels
+      // Populate level selector with predefined levels only, without email counts
       allLevels.forEach(level => {
         $('#levelSelector').append(`<option value="${level}">${level}</option>`);
       });
@@ -161,28 +161,82 @@
       if (!window.selectedLevels.includes(level)) {
         window.selectedLevels.push(level);
 
-        // Add visual chip
-        const levelChip = $(`
-          <div class="level-chip" data-level="${level}">
-            ${level}
-            <span class="remove-level">
+        // Calculate the step number (Author is step 1, so levels start at 2)
+        const stepNumber = window.selectedLevels.length + 1;
+
+        // Special note for Division Chief
+        let specialNote = '';
+        if (level === 'Division Chief') {
+          specialNote = `<small class="text-info d-block mt-1"><i class="bi bi-info-circle me-1"></i>The appropriate Division Chief will be automatically assigned based on your division.</small>`;
+        }
+
+        // Create a new approval step without email notes
+        const approvalStep = $(`
+          <div class="approval-step" data-level="${level}" data-order="${window.selectedLevels.length}">
+            <div class="approval-step-number">${stepNumber}</div>
+            <div class="approval-step-content">
+              <div class="approval-step-title">${level}</div>
+              <div class="approval-step-desc">Approval level ${window.selectedLevels.length}${specialNote}</div>
+            </div>
+            <button type="button" class="approval-step-remove">
               <i class="bi bi-x"></i>
-            </span>
+            </button>
           </div>
         `);
 
-        $('#levelOrderContainer').append(levelChip);
+        // Add connector if it's not the first item
+        if (window.selectedLevels.length > 1) {
+          const connector = $(`
+            <div class="approval-connector">
+              <i class="bi bi-arrow-down"></i>
+            </div>
+          `);
+          $('#levelOrderContainer').append(connector);
+        }
+
+        // Remove empty state if present
+        $('.approval-empty-state').remove();
+
+        // Add to container
+        $('#levelOrderContainer').append(approvalStep);
 
         // Add remove event
-        levelChip.find('.remove-level').on('click', function () {
-          removeLevelFromOrder(level);
-          levelChip.remove();
+        approvalStep.find('.approval-step-remove').on('click', function () {
+          const levelToRemove = approvalStep.data('level');
+          removeLevelFromOrder(levelToRemove);
+
+          // Remove the connector above this step if it exists
+          const prevConnector = approvalStep.prev('.approval-connector');
+          if (prevConnector.length) {
+            prevConnector.remove();
+          } else {
+            // If no connector above, remove the connector below if it exists and this is the first item
+            const nextConnector = approvalStep.next('.approval-connector');
+            if (nextConnector.length && approvalStep.data('order') === 0) {
+              nextConnector.remove();
+            }
+          }
+
+          approvalStep.remove();
+
+          // Add empty state if no levels
+          if (window.selectedLevels.length === 0) {
+            $('#levelOrderContainer').html(`
+              <div class="approval-empty-state text-center p-3">
+                <i class="bi bi-diagram-3 text-muted mb-2" style="font-size: 2rem;"></i>
+                <p class="text-muted mb-0">No approval levels added yet. Use the "Add Level" button to create your approval workflow.</p>
+              </div>
+            `);
+          } else {
+            // Reorder remaining steps
+            reorderApprovalSteps();
+          }
         });
 
         // Update hidden input
         updateLevelOrderInput();
       } else {
-        showAlert(`${level} is already in the level order`, 'info');
+        showAlert(`${level} is already in the approval workflow`, 'info');
       }
 
       // Reset selector
@@ -193,6 +247,32 @@
       // Remove from array
       window.selectedLevels = window.selectedLevels.filter(l => l !== level);
       updateLevelOrderInput();
+    }
+
+    function reorderApprovalSteps() {
+      // Check if author is included
+      const isAuthorIncluded = $('#authorToggle').is(':checked');
+      const authorOffset = isAuthorIncluded ? 1 : 0; // If author is included, dynamic levels start at step 2, otherwise at step 1
+
+      // Refresh all step numbers and descriptions
+      $('.approval-step:not(.fixed)').each(function (index) {
+        const stepNumber = index + 1 + authorOffset; // Add authorOffset to adjust numbering
+        const stepOrder = index;
+        const level = $(this).data('level');
+
+        // Update the step number
+        $(this).data('order', stepOrder);
+        $(this).find('.approval-step-number').text(stepNumber);
+
+        // Special note for Division Chief
+        let specialNote = '';
+        if (level === 'Division Chief') {
+          specialNote = `<small class="text-info d-block mt-1"><i class="bi bi-info-circle me-1"></i>The appropriate Division Chief will be automatically assigned based on your division.</small>`;
+        }
+
+        // Update description with special note if needed
+        $(this).find('.approval-step-desc').html(`Approval level ${index + 1}${specialNote}`);
+      });
     }
 
     function updateLevelOrderInput() {
@@ -225,17 +305,17 @@
       // Set up personnel initials section
       loadPersonnelData().then(() => {
         setupPersonnelLevelsSection();
+        setupAuthorToggle();
+        setupControlNumberToggle();
       }).catch(err => {
         showAlert('Failed to load personnel data: ' + err.message, 'danger');
       });
     });
 
     $('#formDetailsModal').on('hidden.bs.modal', function () {
-      if (currentControlNumber) {
-        cancelFormRequest(currentControlNumber);
-        currentControlNumber = null;
-        currentTemplateData = null;
-      }
+      // Simply reset variables, don't call any server-side functions
+      currentControlNumber = null;
+      currentTemplateData = null;
       isSubmitting = false;
     });
 
@@ -286,21 +366,38 @@
       }
     }
 
-    function cancelFormRequest(controlNumber) {
-      google.script.run
-        .withSuccessHandler(function (response) {
-          console.log('Form request canceled:', response);
-        })
-        .withFailureHandler(function (error) {
-          console.error('Error canceling form request:', error);
-        })
-        .cancelFormRequest(controlNumber);
-    }
-
     $('#dynamicForm').on('submit', function (e) {
       e.preventDefault();
       registerTemplate();
     });
+
+    // Set up the control number toggle functionality
+    function setupControlNumberToggle() {
+      $('#controlNumberToggle').on('change', function () {
+        const includeControlNumber = $(this).is(':checked');
+        $('#includeControlNumber').val(includeControlNumber.toString());
+
+        // Always show the control number field, but update its display based on toggle state
+        const controlNumberField = $('#formFieldsContainer').find('.control-number-field');
+        if (controlNumberField.length > 0) {
+          const controlNumberGroup = controlNumberField.closest('.mb-3');
+          if (!includeControlNumber) {
+            // If control number is disabled, add a note explaining it's for tracking only
+            if (controlNumberGroup.find('.control-number-note').length === 0) {
+              controlNumberGroup.append('<small class="text-muted control-number-note d-block mt-1"><i class="bi bi-info-circle me-1"></i>This control number will be used for tracking only and won\'t appear in the document.</small>');
+            }
+            controlNumberField.addClass('text-muted opacity-75');
+          } else {
+            // If control number is enabled, remove the note and restore normal appearance
+            controlNumberGroup.find('.control-number-note').remove();
+            controlNumberField.removeClass('text-muted opacity-75');
+          }
+        }
+      });
+
+      // Initial trigger to set the correct state
+      $('#controlNumberToggle').trigger('change');
+    }
 
     function registerTemplate() {
       if (isSubmitting) {
@@ -329,16 +426,70 @@
 
       isSubmitting = true;
       const templateName = $('#modalFormName').text();
+
+      // Get the author toggle state
+      const includeAuthor = $('#authorToggle').is(':checked');
+
+      // Get the control number toggle state
+      const includeControlNumber = $('#controlNumberToggle').is(':checked');
+
+      // Always include the level order
       const levelOrder = getLevelOrder();
 
-      // Get target person from the field
-      const targetPerson = $('#target-person').val();
-
       if (!levelOrder) {
-        showAlert('Please add at least one level to the level order', 'danger');
+        showAlert('Please add at least one level to the level order', 'warning');
         isSubmitting = false;
         return;
       }
+
+      console.log('Include Author:', includeAuthor);
+      console.log('Include Control Number:', includeControlNumber);
+      console.log('Level Order:', levelOrder);
+
+      // Collect form field values to create the document
+      const formValues = [];
+
+      // Log all form fields that are available
+      console.log('Form fields:', $('#dynamicForm').find('input:not([readonly]), select, textarea').map(function () {
+        return {
+          id: $(this).attr('id'),
+          name: $(this).attr('name'),
+          type: $(this).attr('type') || $(this).prop('tagName'),
+          value: $(this).val()
+        };
+      }).get());
+
+      const inputs = $('#dynamicForm').find('input:not([readonly]):not(.control-number-field), select, textarea');
+
+      inputs.each(function () {
+        if ($(this).attr('type') === 'submit' || $(this).attr('type') === 'button') return;
+
+        const fieldName = $(this).attr('name');
+
+        // Skip approval workflow fields
+        if (!fieldName || fieldName === 'levelOrderArray' || fieldName === 'includeAuthor' ||
+          fieldName === 'includeControlNumber' || fieldName.startsWith('personnel_')) {
+          return;
+        }
+
+        let fieldValue;
+
+        if ($(this).is('select')) {
+          fieldValue = $(this).find('option:selected').val() || '';
+        } else if ($(this).attr('type') === 'checkbox') {
+          fieldValue = $(this).is(':checked');
+        } else if ($(this).attr('type') === 'date') {
+          // Handle date inputs directly
+          fieldValue = $(this).val();
+        } else {
+          fieldValue = $(this).val();
+        }
+
+        formValues.push({ name: fieldName, value: fieldValue });
+      });
+
+      // Log the final form values
+      console.log('Form values to be submitted with template:', formValues);
 
       const submitBtn = $('#dynamicForm').find('button[type="submit"]');
       const originalBtnText = submitBtn.html();
@@ -347,7 +498,23 @@
 
       google.script.run
         .withSuccessHandler(function (response) {
-          showAlert('Template registered successfully!', 'success');
+          console.log('Template registration response:', response);
+
+          if (response.document && response.document.status === 'success') {
+            showAlert('Template registered and document created successfully!', 'success');
+
+            // Open the created document if available
+            if (response.document.documentUrl) {
+              setTimeout(() => {
+                window.open(response.document.documentUrl, '_blank');
+              }, 500);
+            }
+          } else if (response.document && response.document.status === 'error') {
+            showAlert('Template registered but document creation failed: ' + response.document.message, 'warning');
+          } else {
+            showAlert('Template registered successfully!', 'success');
+          }
+
           const modal = bootstrap.Modal.getInstance($('#formDetailsModal')[0]);
           if (modal) modal.hide();
           currentControlNumber = null;
@@ -362,7 +529,7 @@
           submitBtn.prop('disabled', false);
           isSubmitting = false;
         })
-        .registerTemplate(templateName, levelOrder, targetPerson);
+        .registerTemplate(templateName, levelOrder, includeAuthor, formValues, includeControlNumber);
     }
 
     function submitFormData() {
@@ -374,35 +541,20 @@
       isSubmitting = true;
       const formValues = [];
       const templateName = $('#modalFormName').text();
-      const needsInitialStamp = $('#needsInitialStamp').is(':checked');
-      const initialPersonality = $('#initialPersonality').val();
-      const needsSignatureStamp = $('#needsSignatureStamp').is(':checked');
-      const signaturePersonality = $('#signaturePersonality').val();
 
-      if (needsInitialStamp && !initialPersonality) {
-        showAlert('Please select a personality for initial stamp', 'danger');
-        $('#initialPersonality').focus();
-        isSubmitting = false;
-        return;
-      }
+      // Get the control number toggle state
+      const includeControlNumber = $('#controlNumberToggle').is(':checked');
+      console.log('Include Control Number:', includeControlNumber);
 
-      if (needsSignatureStamp && !signaturePersonality) {
-        showAlert('Please select a personality for signature stamp', 'danger');
-        $('#signaturePersonality').focus();
-        isSubmitting = false;
-        return;
-      }
-
-      formValues.push({ name: 'needsInitialStamp', value: needsInitialStamp });
-      formValues.push({ name: 'needsSignatureStamp', value: needsSignatureStamp });
-
-      if (needsInitialStamp && initialPersonality) {
-        formValues.push({ name: 'initialPersonality', value: initialPersonality });
-      }
-
-      if (needsSignatureStamp && signaturePersonality) {
-        formValues.push({ name: 'signaturePersonality', value: signaturePersonality });
-      }
+      // Log all form fields that are available
+      console.log('Form fields:', $('#dynamicForm').find('input:not([readonly]), select, textarea').map(function () {
+        return {
+          id: $(this).attr('id'),
+          name: $(this).attr('name'),
+          type: $(this).attr('type') || $(this).prop('tagName'),
+          value: $(this).val()
+        };
+      }).get());
 
       const inputs = $('#dynamicForm').find('input:not([readonly]):not(.control-number-field), select, textarea');
 
@@ -411,32 +563,9 @@
 
         const fieldName = $(this).attr('name');
 
-        if (fieldName === 'needsInitialStamp' || fieldName === 'initialPersonality' ||
-          fieldName === 'needsSignatureStamp' || fieldName === 'signaturePersonality' ||
-          fieldName && fieldName.startsWith('personnel_')) {
-          return;
-        }
-
-        if (fieldName && fieldName.endsWith('_date')) {
-          const baseName = fieldName.replace('_date', '');
-          const dateValue = $(this).val();
-          const timeValue = $(`[name="${baseName}_time"]`).val();
-
-          if (dateValue && timeValue) {
-            formValues.push({
-              name: baseName,
-              value: `${dateValue}T${timeValue}:00`
-            });
-          } else if (dateValue) {
-            formValues.push({
-              name: baseName,
-              value: dateValue
-            });
-          }
-          return;
-        }
-
-        if (fieldName && fieldName.endsWith('_time')) {
+        // Skip form management fields
+        if (!fieldName || fieldName === 'levelOrderArray' || fieldName === 'includeAuthor' ||
+          fieldName === 'includeControlNumber' || fieldName.startsWith('personnel_')) {
           return;
         }
 
@@ -446,12 +575,18 @@
           fieldValue = $(this).find('option:selected').val() || '';
         } else if ($(this).attr('type') === 'checkbox') {
           fieldValue = $(this).is(':checked');
+        } else if ($(this).attr('type') === 'date') {
+          // Handle date inputs directly
+          fieldValue = $(this).val();
         } else {
           fieldValue = $(this).val();
         }
 
         formValues.push({ name: fieldName, value: fieldValue });
       });
+
+      // Log the final form values
+      console.log('Form values to be submitted:', formValues);
 
       const submitBtn = $('#dynamicForm').find('button[type="submit"]');
       const originalBtnText = submitBtn.html();
@@ -462,7 +597,7 @@
         .withSuccessHandler(function (response) {
           google.script.run
             .withSuccessHandler(function (docResponse) {
-              showAlert('Form submitted successfully! Control Number: ' + response.controlNumber, 'success');
+              showAlert('Form submitted successfully!' + (response.controlNumber ? ' Control Number: ' + response.controlNumber : ''), 'success');
               const modal = bootstrap.Modal.getInstance($('#formDetailsModal')[0]);
               if (modal) modal.hide();
               currentControlNumber = null;
@@ -471,8 +606,8 @@
               submitBtn.prop('disabled', false);
               isSubmitting = false;
 
-              if (docResponse.status === "success") {
-                window.open(docResponse.document, '_blank');
+              if (docResponse) {
+                window.open(docResponse, '_blank');
               }
             })
             .withFailureHandler(function (docError) {
@@ -481,7 +616,11 @@
               submitBtn.prop('disabled', false);
               isSubmitting = false;
             })
-            .createDoc(formValues, response.controlNumber, templateName);
+            .createDoc({
+              templateId: templateName,
+              controlNumber: response.controlNumber,
+              ...formValues
+            });
         })
         .withFailureHandler(function (error) {
           showAlert('Error submitting form: ' + (error.message || 'Unknown error occurred'), 'danger');
@@ -489,7 +628,7 @@
           submitBtn.prop('disabled', false);
           isSubmitting = false;
         })
-        .submitFormData(templateName, currentControlNumber);
+        .submitFormData(templateName, includeControlNumber);
     }
 
     function updateDocumentPreview() {
@@ -961,6 +1100,7 @@
     function createDynamicFields(fieldsString, container, controlNumber) {
       $(container).empty();
 
+      // Add Control Number field - always shown, but with a note if toggle is off
       const controlNumberGroup = $('<div>').addClass('mb-3');
       const controlLabel = $('<label>').addClass('form-label').text('Control No');
       const controlInput = $('<input>').attr({
@@ -973,6 +1113,13 @@
         'font-weight': '500'
       });
       controlNumberGroup.append(controlLabel, controlInput);
+
+      // Add a note if control number toggle is off
+      if ($('#controlNumberToggle').length > 0 && !$('#controlNumberToggle').is(':checked')) {
+        controlInput.addClass('text-muted opacity-75');
+        controlNumberGroup.append('<small class="text-muted control-number-note d-block mt-1"><i class="bi bi-info-circle me-1"></i>This control number will be used for tracking only and won\'t appear in the document.</small>');
+      }
+
       $(container).append(controlNumberGroup);
 
       const fieldsArray = fieldsString.split(';').map(f => f.trim()).filter(f => f && !f.startsWith('CONTROL NO'));
@@ -980,7 +1127,12 @@
       fieldsArray.forEach(field => {
         const separator = field.includes(':') ? ':' : ';';
         const [name, type] = field.split(separator).map(f => f.trim());
-        const fieldId = name.toLowerCase().replace(/\s+/g, '-');
+        let fieldId;
+        if (name.toUpperCase() === 'TARGET PERSON') {
+          fieldId = 'target-person';
+        } else {
+          fieldId = name.toLowerCase().replace(/\s+/g, '-');
+        }
 
         const fieldGroup = $('<div>').addClass('mb-3');
         const label = $('<label>').addClass('form-label').attr('for', fieldId).text(name);
@@ -1037,9 +1189,15 @@
       }).text('-- Select a personality --').appendTo(input);
 
       // Populate with available personalities
-      if (window.personnelData && window.personnelData.names) {
-        window.personnelData.names.forEach(personalityName => {
-          $('<option>').attr('value', personalityName).text(personalityName).appendTo(input);
+      if (window.personnelData && window.personnelData.names && window.personnelData.values) {
+        window.personnelData.values.forEach(personnelEntry => {
+          if (personnelEntry && personnelEntry.length > 1) {
+            const email = personnelEntry[0] || '';
+            const name = personnelEntry[1] || '';
+            if (email && name) {
+              $('<option>').attr('value', email).text(name).appendTo(input);
+            }
+          }
         });
       } else {
         // If personnel data isn't loaded yet, load it
@@ -1051,22 +1209,23 @@
             disabled: true
           }).text('-- Select a personality --').appendTo(input);
 
-          data.names.forEach(personalityName => {
-            $('<option>').attr('value', personalityName).text(personalityName).appendTo(input);
-          });
+          if (data.values) {
+            data.values.forEach(personnelEntry => {
+              if (personnelEntry && personnelEntry.length > 1) {
+                const email = personnelEntry[0] || '';
+                const name = personnelEntry[1] || '';
+                if (email && name) {
+                  $('<option>').attr('value', email).text(name).appendTo(input);
+                }
+              }
+            });
+          }
         }).catch(err => {
           console.error('Failed to load personalities for field:', err);
         });
       }
 
-      // Add a note that this person will be first in the approval queue
-      if (name === 'TARGET PERSON') {
-        const helperText = $('<small>').addClass('form-text text-muted mt-1')
-          .text('This person will be the first in the approval queue.');
-        fieldGroup.append(label, input, helperText);
-      } else {
-        fieldGroup.append(label, input);
-      }
+      fieldGroup.append(label, input);
     }
 
     function createDateField(fieldGroup, name, fieldId, normalizedType, label) {
@@ -1074,28 +1233,29 @@
         const dateTimeGroup = $('<div>').addClass('datetime-group');
 
         const dateLabel = $('<label>').addClass('form-label small').text('Date');
-        const dateInput = $('<input>').addClass('form-control mb-2 datepicker').attr({
-          id: fieldId + '_date',
-          name: name + '_date',
+        const dateInput = $('<input>').addClass('form-control datepicker').attr({
+          id: fieldId,
+          name: name,
           type: 'date'
         }).css('max-width', '200px');
 
-        const timeLabel = $('<label>').addClass('form-label small').text('Time');
-        const timeInput = $('<input>').addClass('form-control timepicker').attr({
-          id: fieldId + '_time',
-          name: name + '_time',
-          type: 'time',
-          step: '300'
-        }).css('max-width', '150px');
-
         dateTimeGroup.append(
           $('<div>').append(label),
-          $('<div>').append(dateLabel, dateInput),
-          $('<div>').append(timeLabel, timeInput)
+          $('<div>').append(dateLabel, dateInput)
         );
 
         fieldGroup.append(dateTimeGroup);
-        addDateTimeFallbacks(dateInput, timeInput);
+
+        if (dateInput[0].type !== 'date') {
+          dateInput.attr('type', 'text')
+            .addClass('date-fallback')
+            .attr('placeholder', 'YYYY-MM-DD')
+            .datepicker({
+              dateFormat: 'yy-mm-dd',
+              changeMonth: true,
+              changeYear: true
+            });
+        }
       } else {
         const inputWrapper = $('<div>').css('max-width', '200px');
 
@@ -1415,6 +1575,28 @@
 
     if (window.innerWidth < isMobile) {
       $('.status-filter').addClass('w-100');
+    }
+
+    // Set up the author toggle functionality
+    function setupAuthorToggle() {
+      // Update the author step to only show 'Author' without email
+      $('#authorToggle').on('change', function () {
+        const isChecked = $(this).is(':checked');
+        $('#includeAuthor').val(isChecked.toString());
+
+        // Show or hide the author step
+        if (isChecked) {
+          $('#authorStep').show();
+        } else {
+          $('#authorStep').hide();
+        }
+
+        // Reorder all steps
+        reorderApprovalSteps();
+      });
+
+      // Trigger change to initialize state
+      $('#authorToggle').trigger('change');
     }
   });
 </script>

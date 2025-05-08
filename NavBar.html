@@ -11,7 +11,8 @@
       </div>
     </div>
 
-    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+      aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
@@ -61,7 +62,7 @@
     font-weight: 500;
     letter-spacing: 0.15px;
     animation: fadeIn 0.4s ease-in-out;
-      font-weight: bold;
+    font-weight: bold;
   }
 
   .navbar-title p {
@@ -232,40 +233,40 @@
 </style>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     // Set active nav link based on current page
     const setActivePage = (pageName) => {
       // Hide all pages
       document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
       });
-      
+
       // Show selected page
       const targetPage = document.querySelector('.' + pageName);
       if (targetPage) {
         targetPage.classList.add('active');
       }
-      
+
       // Update nav links
       document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active');
       });
-      
+
       // Set active nav link
       const activeLink = document.querySelector(`[data-page="${pageName}"]`);
       if (activeLink) {
         activeLink.classList.add('active');
       }
     };
-    
+
     // Add click handlers to nav links
     document.querySelectorAll('.nav-link').forEach(link => {
-      link.addEventListener('click', function() {
+      link.addEventListener('click', function () {
         const pageName = this.getAttribute('data-page');
         setActivePage(pageName);
       });
     });
-    
+
     // Set initial active page (default to search)
     const initialPage = document.querySelector('.page.active');
     if (initialPage) {
@@ -274,37 +275,37 @@
     } else {
       setActivePage('search-page');
     }
-    
+
     // Add ripple effect to buttons (Material Design touch feedback)
     const addRippleEffect = (element) => {
-      element.addEventListener('click', function(e) {
+      element.addEventListener('click', function (e) {
         const ripple = document.createElement('span');
         const rect = element.getBoundingClientRect();
-        
+
         const size = Math.max(rect.width, rect.height);
         const x = e.clientX - rect.left - size / 2;
         const y = e.clientY - rect.top - size / 2;
-        
+
         ripple.style.width = ripple.style.height = `${size}px`;
         ripple.style.left = `${x}px`;
         ripple.style.top = `${y}px`;
         ripple.className = 'ripple';
-        
+
         // Remove existing ripples
         const currentRipple = element.querySelector('.ripple');
         if (currentRipple) {
           currentRipple.remove();
         }
-        
+
         element.appendChild(ripple);
-        
+
         // Remove ripple after animation
         setTimeout(() => {
           ripple.remove();
         }, 600);
       });
     };
-    
+
     // Add ripple style
     const style = document.createElement('style');
     style.textContent = `

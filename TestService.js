@@ -1,11 +1,13 @@
 function testCreateDocument() {
-  const testCases = [
-    ["25-0010", "Liceo de Cagayan University", "WORLD"],
-  ];
+  const testCases = [["25-0010", "Liceo de Cagayan University", "WORLD"]];
 
   const results = testCases.map((data, index) => {
     try {
-      const docUrl = DocumentGenerator.createDocument("Test Template", data, false);
+      const docUrl = DocumentGenerator.createDocument(
+        "Test Template",
+        data,
+        false
+      );
       return {
         testCase: index + 1,
         format: data.join(","),
@@ -17,7 +19,7 @@ function testCreateDocument() {
         testCase: index + 1,
         format: data.join(","),
         success: false,
-        error: e.message
+        error: e.message,
       };
     }
   });
@@ -27,7 +29,6 @@ function testCreateDocument() {
 }
 
 function TestGetAllTemplates() {
-
   const results = DocumentGenerator.getTemplates();
 
   Logger.log("Test Results:\n" + JSON.stringify(results, null, 2));
@@ -35,7 +36,6 @@ function TestGetAllTemplates() {
 }
 
 function TestGetATemplate() {
-
   const results = DocumentGenerator.getTemplate("Training Request Form");
 
   Logger.log("Test Results:\n" + JSON.stringify(results, null, 2));
@@ -50,27 +50,36 @@ function getFersons() {
 }
 
 function getStatus() {
-  const results = DocumentGenerator.getRequestStatus("1h550v3Odk6uNAoNCnb-yvdbXzAMDZGIRJik_-fD6Wq8");
+  const results = DocumentGenerator.getRequestStatus(
+    "1h550v3Odk6uNAoNCnb-yvdbXzAMDZGIRJik_-fD6Wq8"
+  );
   Logger.log(results);
   return results;
 }
 
 function getInitials() {
-  const results = DocumentGenerator.requestStampInitial("clydegevero14@gmail.com", "1Hczs7rW9DrczGMD-vjzWcLr-XA2I3PeZp47khhPdjY4");
+  const results = DocumentGenerator.requestStampInitial(
+    "clydegevero14@gmail.com",
+    "1Hczs7rW9DrczGMD-vjzWcLr-XA2I3PeZp47khhPdjY4"
+  );
   Logger.log("Test Results:\n" + JSON.stringify(results, null, 2));
   return results;
 }
 
 function getSignature() {
-  const results = DocumentGenerator.requestStampSignature("jmpalasan@ched.gov.ph", "1pZRyDM3TPoN7P7uYhT11VVYIx_CTn4ZA22kzYp51-lo");
+  const results = DocumentGenerator.requestStampSignature(
+    "jmpalasan@ched.gov.ph",
+    "1pZRyDM3TPoN7P7uYhT11VVYIx_CTn4ZA22kzYp51-lo"
+  );
   Logger.log(results);
   return results;
 }
 
 function setupTrackingSpreadsheet() {
   try {
-
-    const ss = SpreadsheetApp.openById('10kqLkE4WaPZGmpLExi6lO7lul-G8xJ6ONsl5C7k8aCE');
+    const ss = SpreadsheetApp.openById(
+      "10kqLkE4WaPZGmpLExi6lO7lul-G8xJ6ONsl5C7k8aCE"
+    );
     const sheet = ss.getSheets()[0];
 
     sheet.getRange("A1:C1").setValues([["FileId", "Email", "Status"]]);
@@ -85,22 +94,21 @@ function setupTrackingSpreadsheet() {
 
     return {
       status: "success",
-      message: "Tracking spreadsheet has been set up successfully"
+      message: "Tracking spreadsheet has been set up successfully",
     };
   } catch (e) {
     Logger.log("Error setting up tracking spreadsheet: " + e.toString());
     return {
       status: "error",
-      message: e.message || "Unknown error occurred"
+      message: e.message || "Unknown error occurred",
     };
   }
 }
 
 function testTrackSubmission() {
   try {
-
-    const fileId = "1Hczs7rW9DrczGMD-vjzWcLr-XA2I3PeZp47khhPdjY4"; 
-    const personalityName = "Clyde Gevero"; 
+    const fileId = "1Hczs7rW9DrczGMD-vjzWcLr-XA2I3PeZp47khhPdjY4";
+    const personalityName = "Clyde Gevero";
 
     DocumentService.trackSubmission(fileId, personalityName);
 
@@ -108,13 +116,13 @@ function testTrackSubmission() {
 
     return {
       status: "success",
-      message: "Test submission tracked successfully"
+      message: "Test submission tracked successfully",
     };
   } catch (e) {
     Logger.log("Error in test track submission: " + e.toString());
     return {
       status: "error",
-      message: e.message || "Unknown error occurred"
+      message: e.message || "Unknown error occurred",
     };
   }
 }
@@ -131,13 +139,16 @@ function debugDocumentCreation() {
 
     Logger.log("Starting document creation debug test...");
 
-    const result = DocumentGenerator.createDocument(templateName, data, isPrivate);
+    const result = DocumentGenerator.createDocument(
+      templateName,
+      data,
+      isPrivate
+    );
 
     Logger.log("Document creation result type: " + typeof result);
     Logger.log("Document creation result: " + JSON.stringify(result));
 
-    if (typeof result === 'object') {
-
+    if (typeof result === "object") {
       for (const key in result) {
         Logger.log("Property '" + key + "': " + JSON.stringify(result[key]));
       }
@@ -150,7 +161,7 @@ function debugDocumentCreation() {
       status: "success",
       resultType: typeof result,
       result: result,
-      extractedFileId: fileId
+      extractedFileId: fileId,
     };
   } catch (e) {
     Logger.log("Debug document creation error: " + e.toString());
@@ -161,8 +172,8 @@ function debugDocumentCreation() {
       message: e.message || "Unknown error occurred",
       errorDetails: {
         name: e.name || "Error",
-        stack: e.stack || "No stack trace available"
-      }
+        stack: e.stack || "No stack trace available",
+      },
     };
   }
 }
@@ -171,7 +182,9 @@ function debugGetRequestStatus() {
   try {
     const fileId = "1HQzI9rXoPuFdMEH9v6H259B22SlhstXMkVLtIYLajoc";
 
-    Logger.log("---------------------- DEBUG GET REQUEST STATUS ----------------------");
+    Logger.log(
+      "---------------------- DEBUG GET REQUEST STATUS ----------------------"
+    );
     Logger.log("Testing getRequestStatus for file ID: " + fileId);
 
     const result = DocumentGenerator.getRequestStatus(fileId);
@@ -197,25 +210,34 @@ function debugGetRequestStatus() {
           Logger.log("  Entry length: " + result[i].length);
 
           for (let j = 0; j < result[i].length; j++) {
-            Logger.log("  Element [" + i + "][" + j + "]: " + JSON.stringify(result[i][j]));
+            Logger.log(
+              "  Element [" +
+                i +
+                "][" +
+                j +
+                "]: " +
+                JSON.stringify(result[i][j])
+            );
 
-            if (typeof result[i][j] === 'string' &&
-              (result[i][j].includes('<') || result[i][j].includes('>'))) {
+            if (
+              typeof result[i][j] === "string" &&
+              (result[i][j].includes("<") || result[i][j].includes(">"))
+            ) {
               Logger.log("  Element [" + i + "][" + j + "] contains HTML");
             }
           }
         } else {
-
           Logger.log("  Value: " + JSON.stringify(result[i]));
         }
       }
-    } else if (typeof result === 'object') {
-
+    } else if (typeof result === "object") {
       Logger.log("Object properties:");
 
       for (const key in result) {
         if (result.hasOwnProperty(key)) {
-          Logger.log("  Property '" + key + "': " + JSON.stringify(result[key]));
+          Logger.log(
+            "  Property '" + key + "': " + JSON.stringify(result[key])
+          );
         }
       }
     }
@@ -228,7 +250,11 @@ function debugGetRequestStatus() {
         Logger.log("Direct access to result[0][2]: " + result[0][2]);
       }
 
-      if (result.length > 1 && Array.isArray(result[1]) && result[1].length > 2) {
+      if (
+        result.length > 1 &&
+        Array.isArray(result[1]) &&
+        result[1].length > 2
+      ) {
         Logger.log("Direct access to result[1][2]: " + result[1][2]);
       }
     }
@@ -241,7 +267,7 @@ function debugGetRequestStatus() {
       resultType: typeof result,
       isArray: Array.isArray(result),
       extractedStatus: status,
-      rawResult: result
+      rawResult: result,
     };
   } catch (e) {
     Logger.log("Error in debugGetRequestStatus: " + e.toString());
@@ -252,15 +278,15 @@ function debugGetRequestStatus() {
       message: e.message || "Unknown error occurred",
       errorDetails: {
         name: e.name || "Error",
-        stack: e.stack || "No stack trace available"
-      }
+        stack: e.stack || "No stack trace available",
+      },
     };
   }
 }
 
 function trashTemplates() {
   const v = "1";
-  const rows = [789,793,794];
+  const rows = [789, 793, 794];
   const headers = [
     "Row",
     "Email",
@@ -271,26 +297,30 @@ function trashTemplates() {
     "Values",
     "isPrivate",
     "isTrashed",
-    "Timestamp"
+    "Timestamp",
   ];
 
-  rows.forEach(row => {
+  rows.forEach((row) => {
     DocumentGenerator.trash(v, row, headers);
   });
 
   fetchTemplatesTest();
 }
 
-
 function getFersonstoSheet() {
   const personalities = DocumentGenerator.getPersonalities();
-  const sheet = SpreadsheetApp.openById('1DoEWGWW9Bfh7W-R7rVxGVyRlV55SHCUKpwEG0mwBA8A')
-    .getSheetByName('Personalities');
+  const sheet = SpreadsheetApp.openById(
+    "1DoEWGWW9Bfh7W-R7rVxGVyRlV55SHCUKpwEG0mwBA8A"
+  ).getSheetByName("Personalities");
 
   sheet.clear();
 
-  if (!personalities || !personalities.values || personalities.values.length === 0) {
-    sheet.getRange(1, 1).setValue('No results found.');
+  if (
+    !personalities ||
+    !personalities.values ||
+    personalities.values.length === 0
+  ) {
+    sheet.getRange(1, 1).setValue("No results found.");
     return;
   }
 
@@ -306,21 +336,22 @@ function getFersonstoSheet() {
   }
 }
 
-
 function fetchTemplatesTest() {
   const results = DocumentGenerator.getDataDocuments();
-  const sheet = SpreadsheetApp.openById('1DoEWGWW9Bfh7W-R7rVxGVyRlV55SHCUKpwEG0mwBA8A').getSheetByName('TempLog');
+  const sheet = SpreadsheetApp.openById(
+    "1DoEWGWW9Bfh7W-R7rVxGVyRlV55SHCUKpwEG0mwBA8A"
+  ).getSheetByName("TempLog");
 
   sheet.clear();
 
   if (!results) {
-    sheet.getRange(1, 1).setValue('No results found.');
+    sheet.getRange(1, 1).setValue("No results found.");
     return;
   }
 
   if (Array.isArray(results)) {
     if (results.length === 0) {
-      sheet.getRange(1, 1).setValue('No templates found.');
+      sheet.getRange(1, 1).setValue("No templates found.");
       return;
     }
 
@@ -334,7 +365,7 @@ function fetchTemplatesTest() {
     if (dataRows.length > 0) {
       sheet.getRange(2, 1, dataRows.length, headers.length).setValues(dataRows);
     }
-  } else if (typeof results === 'object') {
+  } else if (typeof results === "object") {
     const headers = results.headers || [];
     const dataRows = results.displayValues || [];
 
@@ -346,22 +377,22 @@ function fetchTemplatesTest() {
       sheet.getRange(2, 1, dataRows.length, headers.length).setValues(dataRows);
     }
   } else {
-    sheet.getRange(1, 1).setValue('Unexpected results format.');
+    sheet.getRange(1, 1).setValue("Unexpected results format.");
   }
 }
 
 function fetchTemplates() {
   try {
-    const results = DocumentGenerator.getDataDocuments()
+    const results = DocumentGenerator.getDataDocuments();
     if (Array.isArray(results) && results.length > 0) {
       return {
         headers: results[0],
-        data: results.slice(1)
+        data: results.slice(1),
       };
     } else {
       return {
         headers: [],
-        data: []
+        data: [],
       };
     }
   } catch (error) {
@@ -369,7 +400,7 @@ function fetchTemplates() {
     return {
       error: error.toString(),
       headers: [],
-      data: []
+      data: [],
     };
   }
 }

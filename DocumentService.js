@@ -14,35 +14,153 @@ function createDoc(formData, controlNumber, templateName) {
       throw new Error("Invalid template name provided");
     }
 
+    // Get current user's email for TARGET PERSON field
+    let currentUserEmail = "";
+    try {
+      currentUserEmail = Session.getActiveUser().getEmail();
+      Logger.log("[Document Creation] Current user email: " + currentUserEmail);
+    } catch (e) {
+      Logger.log(
+        "[Document Creation] Error getting user email: " + e.toString()
+      );
+    }
+
     const formDataObj = {};
+    const formDataObjUpper = {};
+
+    // Validate formData is an array
+    if (!Array.isArray(formData)) {
+      Logger.log(
+        "[Document Creation] Form data is not an array, converting to expected format"
+      );
+      formData = [];
+    }
+
     formData.forEach((item) => {
-      formDataObj[item.name] = item.value;
+      // Skip items without a name property
+      if (!item || !item.name) return;
+
+      // If this is TARGET PERSON field, use current user's email
+      if (item.name.toUpperCase() === "TARGET PERSON") {
+        formDataObj[item.name] = currentUserEmail;
+        formDataObjUpper[item.name.toUpperCase()] = currentUserEmail;
+      } else {
+        formDataObj[item.name] = item.value;
+        formDataObjUpper[item.name.toUpperCase()] = item.value; // Store uppercase version for case-insensitive matching
+      }
     });
 
+    // Make sure TARGET PERSON is defined even if not in the form
+    if (!formDataObj["TARGET PERSON"] && !formDataObjUpper["TARGET PERSON"]) {
+      formDataObj["TARGET PERSON"] = currentUserEmail;
+      formDataObjUpper["TARGET PERSON"] = currentUserEmail;
+    }
+
+    Logger.log(
+      "[Document Creation] Form data object: " + JSON.stringify(formDataObj)
+    );
+
     var data = [];
+
+    // Only add control number to the data array if it exists
     if (controlNumber) {
       data.push(controlNumber);
     }
 
     const templateData = mapTemplateData(templateName);
+
+    if (!templateData) {
+      throw new Error("Template data not found for: " + templateName);
+    }
+
+    if (!templateData["Fields"]) {
+      throw new Error("Template fields not defined for: " + templateName);
+    }
+
     const fields = templateData["Fields"]
       .split(";")
       .map((f) => f.trim())
       .filter((f) => f);
 
+    Logger.log(
+      "[Document Creation] Template fields: " + JSON.stringify(fields)
+    );
+
+    // Ensure fields are properly formatted for the document generator
     fields.forEach((field) => {
       const [fieldName] = field.split(":").map((f) => f.trim());
+
+      // Skip CONTROL NO field if we don't have a control number
+      if (fieldName === "CONTROL NO" && !controlNumber) {
+        Logger.log(
+          "[Document Creation] Skipping CONTROL NO field as no control number was provided"
+        );
+        return;
+      }
+
       if (fieldName !== "CONTROL NO") {
-        data.push(formDataObj[fieldName] || "");
+        // Special handling for TARGET PERSON field - use current user
+        if (fieldName.toUpperCase() === "TARGET PERSON") {
+          data.push(currentUserEmail || "");
+        }
+        // First try exact match
+        else if (formDataObj[fieldName] !== undefined) {
+          data.push(formDataObj[fieldName] || "");
+        }
+        // Then try case-insensitive match
+        else if (formDataObjUpper[fieldName.toUpperCase()] !== undefined) {
+          data.push(formDataObjUpper[fieldName.toUpperCase()] || "");
+        }
+        // Then try hyphenated field ID format (convert spaces to hyphens and lowercase)
+        else {
+          const fieldId = fieldName.toLowerCase().replace(/\s+/g, "-");
+          if (formDataObj[fieldId] !== undefined) {
+            data.push(formDataObj[fieldId] || "");
+          } else {
+            // If all else fails, push empty string
+            data.push("");
+            Logger.log(
+              "[Document Creation] Field not found in form data: " + fieldName
+            );
+          }
+        }
       }
     });
 
     Logger.log("[Document Creation] Final data array: " + JSON.stringify(data));
 
-    var doc = DocumentGenerator.createDocument(templateName, data, isPrivate);
+    try {
+      // Ensure data is appropriate type for the document generator
+      if (!Array.isArray(data)) {
+        throw new Error("Data must be an array");
+      }
 
-    if (!doc) {
-      throw new Error("Document creation returned no result");
+      // Convert any complex values to strings to avoid type errors
+      const safeData = data.map((item) => {
+        if (item === null || item === undefined) return "";
+        if (typeof item === "object") return JSON.stringify(item);
+        return String(item);
+      });
+
+      Logger.log(
+        "[Document Creation] Safe data array: " + JSON.stringify(safeData)
+      );
+
+      var doc = DocumentGenerator.createDocument(
+        templateName,
+        safeData,
+        isPrivate
+      );
+
+      if (!doc) {
+        throw new Error("Document creation returned no result");
+      }
+    } catch (docError) {
+      Logger.log(
+        "[Document Creation] Error in DocumentGenerator.createDocument: " +
+          docError.toString()
+      );
+      throw new Error("Error creating document: " + docError.message);
     }
 
     Logger.log(
@@ -50,7 +168,7 @@ function createDoc(formData, controlNumber, templateName) {
         JSON.stringify(doc)
     );
 
-    let fileId = this.extractFileId(doc);
+    let fileId = extractFileId(doc);
 
     if (!fileId || fileId === "[object Object]") {
       Logger.log(
@@ -82,72 +200,10 @@ function createDoc(formData, controlNumber, templateName) {
 
     Logger.log("[Document Creation] Extracted file ID: " + fileId);
 
-    // Get personality details from the enhanced modal
-    let fileName = doc.name || templateName + " - " + controlNumber;
-
-    // Get target person (author) from form data
-    const targetPerson = formDataObj["TARGET PERSON"] || "";
-    Logger.log("[Document Creation] Target Person: " + targetPerson);
-
-    // Check for initial stamp requirements
-    const needsInitialStamp =
-      formDataObj.needsInitialStamp === true ||
-      formDataObj.needsInitialStamp === "true";
-    const initialPersonality = formDataObj.initialPersonality || targetPerson;
-
-    // Check for signature stamp requirements
-    const needsSignatureStamp =
-      formDataObj.needsSignatureStamp === true ||
-      formDataObj.needsSignatureStamp === "true";
-    const signaturePersonality = formDataObj.signaturePersonality;
-
-    Logger.log(
-      "[Document Creation] Initial stamp needed: " +
-        needsInitialStamp +
-        ", personality: " +
-        initialPersonality
-    );
-    Logger.log(
-      "[Document Creation] Signature stamp needed: " +
-        needsSignatureStamp +
-        ", personality: " +
-        signaturePersonality
-    );
-
-    // Track the submission with the new personality information
-    const trackingResult = this.trackSubmissionWithPersonalities(
-      fileId,
-      fileName,
-      needsInitialStamp ? initialPersonality : targetPerson,
-      needsSignatureStamp ? signaturePersonality : "",
-      needsInitialStamp || !!targetPerson,
-      needsSignatureStamp
-    );
-
-    Logger.log(
-      "[Document Creation] Tracked submission result: " + trackingResult
-    );
-
-    // If template has a level order, make sure the target person is first in queue
-    if (templateData["Level Order"] && targetPerson) {
-      try {
-        // Set the target person as the first approver in the queue
-        Logger.log(
-          "[Document Creation] Setting target person as first approver in queue: " +
-            targetPerson
-        );
-        DocumentGenerator.setFirstApprover(fileId, targetPerson);
-      } catch (queueError) {
-        Logger.log(
-          "[Document Creation] ERROR setting approver queue: " +
-            queueError.toString()
-        );
-      }
-    }
-
     return {
       status: "success",
       document: doc,
+      documentUrl: `https://docs.google.com/document/d/${fileId}/edit`,
       controlNumber: controlNumber,
     };
   } catch (e) {
@@ -351,14 +407,7 @@ function extractLatestStatus(statusArray) {
   }
 }
 
-function trackSubmissionWithPersonalities(
-  fileId,
-  fileName,
-  initialPersonalityName,
-  signaturePersonalityName,
-  needsInitial,
-  needsSignature
-) {
+function trackSubmission(fileId, fileName, author) {
   try {
     if (!fileId || fileId === "[object Object]") {
       Logger.log("[Track Submission] Invalid file ID: " + fileId);
@@ -371,39 +420,18 @@ function trackSubmissionWithPersonalities(
     );
     const sheet = ss.getSheets()[0]; // Assuming first sheet
 
-    // Ensure we have the necessary columns - adjust if needed
+    // Ensure we have the necessary columns
     ensureColumnsExist(sheet);
 
-    // Get initial personality details
-    let initialPersonalityData = null;
-    let initialPersonalityEmail = "";
-    if (needsInitial && initialPersonalityName) {
-      initialPersonalityData = this.getPersonalityDetails(
-        initialPersonalityName
+    // Get current user's email
+    let currentUserEmail = "";
+    try {
+      currentUserEmail = Session.getActiveUser().getEmail();
+      Logger.log("[Track Submission] Current user email: " + currentUserEmail);
+    } catch (e) {
+      Logger.log(
+        "[Track Submission] Error getting user email: " + e.toString()
       );
-      if (initialPersonalityData) {
-        initialPersonalityEmail = initialPersonalityData.email || "";
-        Logger.log(
-          "[Track Submission] Initial personality email: " +
-            initialPersonalityEmail
-        );
-      }
-    }
-
-    // Get signature personality details
-    let signaturePersonalityData = null;
-    let signaturePersonalityEmail = "";
-    if (needsSignature && signaturePersonalityName) {
-      signaturePersonalityData = this.getPersonalityDetails(
-        signaturePersonalityName
-      );
-      if (signaturePersonalityData) {
-        signaturePersonalityEmail = signaturePersonalityData.email || "";
-        Logger.log(
-          "[Track Submission] Signature personality email: " +
-            signaturePersonalityEmail
-        );
-      }
     }
 
     // Get current status from the document generator
@@ -437,21 +465,15 @@ function trackSubmissionWithPersonalities(
       }
     }
 
-    // Create or update row with new personality data
-    // Format: [fileName, fileId, email(main), status, lastUpdated, error, needsInitial, initialPersonality, initialEmail, needsSignature, signaturePersonality, signatureEmail]
+    // Create or update row with simplified data
+    // Format: [fileName, fileId, email, status, lastUpdated, error]
     const rowData = [
       fileName,
       fileId,
-      initialPersonalityEmail || signaturePersonalityEmail, // Use initial email as main contact, fallback to signature
+      currentUserEmail,
       status,
       new Date(),
       "", // error message
-      needsInitial,
-      initialPersonalityName || "",
-      initialPersonalityEmail || "",
-      needsSignature,
-      signaturePersonalityName || "",
-      signaturePersonalityEmail || "",
     ];
 
     // Get the range size based on the number of columns we have or need
@@ -460,10 +482,7 @@ function trackSubmissionWithPersonalities(
       .getRange(targetRow, 1, 1, numColumns)
       .setValues([rowData.slice(0, numColumns)]);
 
-    Logger.log(
-      "[Track Submission] Successfully tracked submission with personalities: " +
-        fileId
-    );
+    Logger.log("[Track Submission] Successfully tracked submission: " + fileId);
     return true;
   } catch (e) {
     Logger.log("[Track Submission] ERROR: " + e.toString());
@@ -482,12 +501,6 @@ function ensureColumnsExist(sheet) {
       "Status",
       "Last Updated",
       "Error Message",
-      "Needs Initial",
-      "Initial Personality",
-      "Initial Email",
-      "Needs Signature",
-      "Signature Personality",
-      "Signature Email",
     ];
 
     // Get existing headers
@@ -506,19 +519,6 @@ function ensureColumnsExist(sheet) {
   } catch (e) {
     Logger.log("[Ensure Columns] ERROR: " + e.toString());
   }
-}
-
-// Modified for backward compatibility
-function trackSubmission(fileId, fileName, personalityName) {
-  // For backward compatibility, delegate to the new function
-  return trackSubmissionWithPersonalities(
-    fileId,
-    fileName,
-    personalityName,
-    "",
-    true,
-    false
-  );
 }
 
 function getPersonalityDetails(personalityName) {
@@ -895,74 +895,6 @@ function getAllSubmissions() {
     };
   } catch (e) {
     Logger.log("[Get Submissions] ERROR: " + e.toString());
-    return {
-      status: "error",
-      message: e.message || "Unknown error occurred",
-    };
-  }
-}
-
-function registerTemplate(templateName, levelOrder, targetPerson) {
-  try {
-    Logger.log(
-      "[Register Template] Starting registration for: " + templateName
-    );
-    Logger.log("[Register Template] Level Order: " + levelOrder);
-    Logger.log("[Register Template] Target Person: " + targetPerson);
-
-    if (!templateName) {
-      throw new Error("Template name is required");
-    }
-
-    if (!levelOrder) {
-      throw new Error("Level order is required");
-    }
-
-    // Get existing templates
-    const templates = DocumentGenerator.getTemplates();
-
-    // Check if template exists
-    if (!templates[templateName]) {
-      throw new Error("Template not found: " + templateName);
-    }
-
-    // Store the target person and level order
-    templates[templateName]["Level Order"] = levelOrder;
-    templates[templateName]["Target Person"] = targetPerson || "";
-
-    // Make sure the fields include TARGET PERSON:PERSONALITY if not already there
-    let fields = templates[templateName]["Fields"] || "";
-    if (!fields.includes("TARGET PERSON:PERSONALITY")) {
-      // Check if fields ends with semicolon, if not add one
-      if (fields && !fields.endsWith(";")) {
-        fields += ";";
-      }
-      fields += " TARGET PERSON:PERSONALITY";
-      templates[templateName]["Fields"] = fields;
-      Logger.log(
-        "[Register Template] Added TARGET PERSON field to template fields"
-      );
-    }
-
-    // Save updated templates
-    const result = DocumentGenerator.saveTemplates(templates);
-
-    if (!result) {
-      throw new Error("Failed to save template");
-    }
-
-    Logger.log(
-      "[Register Template] Successfully registered template with level order"
-    );
-    return {
-      status: "success",
-      templateName: templateName,
-      levelOrder: levelOrder,
-      targetPerson: targetPerson || "Not explicitly provided",
-      fields: templates[templateName]["Fields"],
-    };
-  } catch (e) {
-    Logger.log("[Register Template] ERROR: " + e.toString());
     return {
       status: "error",
       message: e.message || "Unknown error occurred",

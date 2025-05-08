@@ -1,78 +1,78 @@
-    <!-- Submissions Page -->
-    <div id="submissions-page" class="page">
-      <div class="container-fluid pt-4 pb-5">
-  
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-          <h3 style="color: #202124; font-size: 22px; font-weight: 400; letter-spacing: -0.25px; margin: 0;">Submission Tracker</h3>
-          <button id="refreshSubmissionsBtn" class="google-button google-button-primary">
-            <span class="google-button-content">
-              <i class="bi bi-arrow-repeat me-2"></i>Refresh
-            </span>
-          </button>
-        </div>
+<!-- Submissions Page -->
+<div id="submissions-page" class="page">
+  <div class="container-fluid pt-4 pb-5">
 
-        <!-- Search and filters -->
-        <div class="google-search-bar-container mb-3">
-          <div class="google-search-bar">
-            <i class="bi bi-search" style="color: #5f6368;"></i>
-            <input type="text" id="submissionsFilter" placeholder="Search submissions">
-          </div>
-        </div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+      <h3 style="color: #202124; font-size: 22px; font-weight: 400; letter-spacing: -0.25px; margin: 0;">Submission
+        Tracker</h3>
+      <button id="refreshSubmissionsBtn" class="google-button google-button-primary">
+        <span class="google-button-content">
+          <i class="bi bi-arrow-repeat me-2"></i>Refresh
+        </span>
+      </button>
+    </div>
 
-        <div class="google-chip-container mb-4">
-          <button type="button" class="google-chip google-chip-selected status-filter" data-status="all">
-            All
-          </button>
-          <button type="button" class="google-chip status-filter" data-status="completed">
-            <i class="bi bi-check-circle-fill me-1 small"></i>Completed
-          </button>
-          <button type="button" class="google-chip status-filter" data-status="pending">
-            <i class="bi bi-clock-fill me-1 small"></i>Pending
-          </button>
-        </div>
-
-
-        <div class="google-card mb-4">
-          <div class="table-responsive">
-            <table class="google-table" id="submissionsTable">
-              <thead>
-                <tr>
-                  <th style="width: 48px">#</th>
-                  <th>File Name</th>
-                  <th>Document ID</th>
-                  <th>Requestee(s)</th>
-                  <th>Status</th>
-                  <th style="width: 120px; text-align: right;">View</th>
-                </tr>
-              </thead>
-              <tbody id="submissionsTableBody">
-                <tr>
-                  <td colspan="6" class="text-center py-5">
-                    <div class="google-spinner"></div>
-                    <p style="color: #5f6368; margin-top: 12px;">Loading submissions...</p>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-
-        <div class="google-card google-empty-state" id="submissionsEmptyState" style="display: none;">
-          <div class="text-center py-5">
-            <img src="https://www.gstatic.com/images/icons/material/system/1x/inbox_gm_grey600_24dp.png" 
-                 alt="Empty inbox" width="48" height="48" style="opacity: 0.7; margin-bottom: 16px;">
-            <h5 style="color: #202124; font-weight: 500; margin-bottom: 8px;">No submissions found</h5>
-            <p style="color: #5f6368; max-width: 400px; margin: 0 auto;">
-              There are no form submissions to display. When users submit forms, they will appear here.
-            </p>
-          </div>
-        </div>
+    <!-- Search and filters -->
+    <div class="google-search-bar-container mb-3">
+      <div class="google-search-bar">
+        <i class="bi bi-search" style="color: #5f6368;"></i>
+        <input type="text" id="submissionsFilter" placeholder="Search submissions">
       </div>
     </div>
 
-<style>
+    <div class="google-chip-container mb-4">
+      <button type="button" class="google-chip google-chip-selected status-filter" data-status="all">
+        All
+      </button>
+      <button type="button" class="google-chip status-filter" data-status="completed">
+        <i class="bi bi-check-circle-fill me-1 small"></i>Completed
+      </button>
+      <button type="button" class="google-chip status-filter" data-status="pending">
+        <i class="bi bi-clock-fill me-1 small"></i>Pending
+      </button>
+    </div>
 
+
+    <div class="google-card mb-4">
+      <div class="table-responsive">
+        <table class="google-table" id="submissionsTable">
+          <thead>
+            <tr>
+              <th style="width: 48px">#</th>
+              <th>File Name</th>
+              <th>Document ID</th>
+              <th>Requestee(s)</th>
+              <th>Status</th>
+              <th style="width: 120px; text-align: right;">View</th>
+            </tr>
+          </thead>
+          <tbody id="submissionsTableBody">
+            <tr>
+              <td colspan="6" class="text-center py-5">
+                <div class="google-spinner"></div>
+                <p style="color: #5f6368; margin-top: 12px;">Loading submissions...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <div class="google-card google-empty-state" id="submissionsEmptyState" style="display: none;">
+      <div class="text-center py-5">
+        <img src="https://www.gstatic.com/images/icons/material/system/1x/inbox_gm_grey600_24dp.png" alt="Empty inbox"
+          width="48" height="48" style="opacity: 0.7; margin-bottom: 16px;">
+        <h5 style="color: #202124; font-weight: 500; margin-bottom: 8px;">No submissions found</h5>
+        <p style="color: #5f6368; max-width: 400px; margin: 0 auto;">
+          There are no form submissions to display. When users submit forms, they will appear here.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
   .google-card {
     background-color: #ffffff;
     border-radius: 8px;
@@ -80,16 +80,16 @@
     overflow: hidden;
     transition: box-shadow 0.2s ease;
   }
-  
+
   .google-card:hover {
     box-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15);
   }
-  
+
   /* Search Bar - Google Drive Style */
   .google-search-bar-container {
     max-width: 720px;
   }
-  
+
   .google-search-bar {
     background-color: #f1f3f4;
     border-radius: 8px;
@@ -99,13 +99,13 @@
     height: 48px;
     transition: background-color 0.2s;
   }
-  
-  .google-search-bar:hover, 
+
+  .google-search-bar:hover,
   .google-search-bar:focus-within {
     background-color: #ffffff;
     box-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15);
   }
-  
+
   .google-search-bar input {
     border: none;
     background: transparent;
@@ -116,22 +116,22 @@
     color: #202124;
     outline: none;
   }
-  
+
   .google-search-bar input::placeholder {
     color: #5f6368;
   }
-  
+
   .google-search-bar i {
     font-size: 18px;
   }
-  
+
   /* Google Chip Styles */
   .google-chip-container {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
   }
-  
+
   .google-chip {
     background-color: #ffffff;
     border: 1px solid #dadce0;
@@ -145,22 +145,22 @@
     transition: all 0.15s ease;
     font-weight: 500;
   }
-  
+
   .google-chip:hover {
     background-color: #f8f9fa;
     border-color: #d2e3fc;
   }
-  
+
   .google-chip-selected {
     background-color: #e8f0fe;
     border-color: #d2e3fc;
     color: #1a73e8;
   }
-  
+
   .google-chip-selected:hover {
     background-color: #d2e3fc;
   }
-  
+
   /* Google Table Styles */
   .google-table {
     width: 100%;
@@ -168,7 +168,7 @@
     font-size: 14px;
     table-layout: fixed;
   }
-  
+
   .google-table th {
     text-align: left;
     padding: 16px;
@@ -178,18 +178,18 @@
     white-space: nowrap;
     background-color: #ffffff;
   }
-  
+
   .google-table td {
     padding: 16px;
     border-bottom: 1px solid #e8eaed;
     color: #202124;
     vertical-align: middle;
   }
-  
+
   .google-table tr:hover td {
     background-color: #f8f9fa;
   }
-  
+
   /* Google Status Badge Styles */
   .status-badge {
     display: inline-flex;
@@ -202,42 +202,42 @@
     white-space: nowrap;
     letter-spacing: 0.25px;
   }
-  
+
   .status-badge.pending {
     background-color: #fff8e1;
     color: #f09300;
   }
-  
+
   .status-badge.processing {
     background-color: #e8f0fe;
     color: #1a73e8;
   }
-  
+
   .status-badge.signature {
     background-color: #f3e8fd;
     color: #a142f4;
   }
-  
+
   .status-badge.completed {
     background-color: #e6f4ea;
     color: #137333;
   }
-  
+
   .status-badge.failed {
     background-color: #fce8e6;
     color: #c5221f;
   }
-  
+
   .status-badge.yes {
     background-color: #e6f4ea;
     color: #137333;
   }
-  
+
   .status-badge.no {
     background-color: #f1f3f4;
     color: #5f6368;
   }
-  
+
   /* Google Button Styles */
   .google-button {
     position: relative;
@@ -257,28 +257,28 @@
     border: none;
     outline: none;
   }
-  
+
   .google-button-content {
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1;
   }
-  
+
   .google-button-primary {
     background-color: #1a73e8;
     color: #ffffff;
   }
-  
+
   .google-button-primary:hover {
     background-color: #1669d9;
     box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
   }
-  
+
   .google-button-primary:active {
     background-color: #185abc;
   }
-  
+
   /* Action buttons in table */
   .google-action-btn {
     display: inline-flex;
@@ -293,20 +293,20 @@
     transition: background-color 0.15s ease;
     cursor: pointer;
   }
-  
+
   .google-action-btn:hover {
     background-color: #f1f3f4;
     color: #202124;
   }
-  
+
   .google-action-btn.primary {
     color: #1a73e8;
   }
-  
+
   .google-action-btn.primary:hover {
     background-color: #e8f0fe;
   }
-  
+
   /* Google Spinner */
   .google-spinner {
     display: inline-block;
@@ -317,31 +317,36 @@
     border-radius: 50%;
     animation: google-spin 1s linear infinite;
   }
-  
+
   @keyframes google-spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+      transform: rotate(0deg);
+    }
+
+    100% {
+      transform: rotate(360deg);
+    }
   }
-  
+
   /* Empty state */
   .google-empty-state {
     background-color: #ffffff;
     border-radius: 8px;
     padding: 24px;
   }
-  
+
   /* Responsive adjustments */
   @media (max-width: 768px) {
     .google-chip {
       flex: 1;
       justify-content: center;
     }
-    
+
     .google-table th:not(:first-child):not(:nth-child(2)):not(:last-child),
     .google-table td:not(:first-child):not(:nth-child(2)):not(:last-child) {
       display: none;
     }
-    
+
     .google-search-bar-container {
       margin-bottom: 16px;
     }
